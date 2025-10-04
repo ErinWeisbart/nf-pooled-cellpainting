@@ -41,34 +41,68 @@ def find_image_for_channel(
     well: str,
     site: str,
     channel: str,
+    channel_index: int,
+    all_channels: List[str],
 ) -> Optional[Path]:
     """
     Find the image file for a specific channel in the given directory.
     
+    Since Nextflow has already staged the correct images for this plate/well/site,
+    we just need to find the file containing the target channel name or number.
+    
+    Handles two naming conventions:
+    1. Descriptive names (corrected images): filename contains channel name (e.g., "CorrDNA.tiff")
+    2. Numbered channels (raw images): filename contains "chN" where N is the channel index (e.g., "ch1" for first channel)
+    
     Args:
-        image_dir: Directory containing images
-        batch: Batch identifier
-        plate: Plate identifier
-        well: Well identifier (e.g., 'A01')
-        site: Site number
-        channel: Channel name
+        image_dir: Directory containing images (already filtered by Nextflow)
+        batch: Batch identifier (for reference, not used in matching)
+        plate: Plate identifier (for reference, not used in matching)
+        well: Well identifier (for reference, not used in matching)
+        site: Site number (for reference, not used in matching)
+        channel: Channel name to find in the filename
+        channel_index: 0-based index of this channel in the channels list
+        all_channels: Full list of channel names (for context)
     
     Returns:
         Path to the image file, or None if not found
     """
-    # Try different filename patterns
-    patterns = [
-        f"*{plate}*{well}*Site*{site}*{channel}*.tif*",
-        f"*{plate}*{well}*{site}*{channel}*.tif*",
-        f"*{well}*Site{site}*{channel}*.tif*",
-        f"*{well}*{site}*{channel}*.tif*",
-    ]
+    # List all TIFF files in the directory
+    tiff_files = list(image_dir.glob("*.tif")) + list(image_dir.glob("*.tiff")) + \
+                 list(image_dir.glob("*.ome.tif")) + list(image_dir.glob("*.ome.tiff"))
     
-    for pattern in patterns:
-        matches = list(image_dir.glob(pattern))
-        if matches:
-            # Return the first match
-            return sorted(matches, key=lambda p: natural_sort_key(p.name))[0]
+    if not tiff_files:
+        return None
+    
+    # Find files that match this channel
+    matching_files = []
+    
+    for tiff_file in tiff_files:
+        filename = tiff_file.name
+        filename_lower = filename.lower()
+        
+        # Strategy 1: Look for channel name in filename (for corrected images)
+        # Example: "Plate_BR00149745_pCFB_Well_D06_Site_1_CorrDNA.tiff"
+        if channel.lower() in filename_lower:
+            matching_files.append(tiff_file)
+            continue
+        
+        # Strategy 2: Look for "chN" pattern where N is channel_index + 1 (for raw images)
+        # Example: "r04c06f01p01-ch1sk1fk1fl1.tiff" where ch1 is the first channel (index 0)
+        channel_number = channel_index + 1  # Convert 0-based index to 1-based channel number
+        
+        # Look for patterns like "ch1", "-ch1-", "-ch1s", "ch1.", etc.
+        # Match: (non-digit or start)ch(N)(non-digit or end)
+        # This avoids matching "ch10" when looking for "ch1"
+        import re
+        pattern = rf'(?:^|[^0-9])ch{channel_number}(?:[^0-9]|$)'
+        if re.search(pattern, filename_lower):
+            matching_files.append(tiff_file)
+            continue
+    
+    if matching_files:
+        # Return the first match (sorted for determinism)
+        return sorted(matching_files, key=lambda p: natural_sort_key(p.name))[0]
     
     return None
 
@@ -300,9 +334,10 @@ def main():
     
     # Load raw images
     raw_images = []
-    for channel in channels:
+    for channel_index, channel in enumerate(channels):
         img_path = find_image_for_channel(
-            args.raw_dir, args.batch, args.plate, args.well, args.site, channel
+            args.raw_dir, args.batch, args.plate, args.well, args.site, channel,
+            channel_index, channels
         )
         if img_path:
             print(f"Found raw image for {channel}: {img_path.name}")
@@ -313,9 +348,10 @@ def main():
     
     # Load corrected images
     corrected_images = []
-    for channel in channels:
+    for channel_index, channel in enumerate(channels):
         img_path = find_image_for_channel(
-            args.corrected_dir, args.batch, args.plate, args.well, args.site, channel
+            args.corrected_dir, args.batch, args.plate, args.well, args.site, channel,
+            channel_index, channels
         )
         if img_path:
             print(f"Found corrected image for {channel}: {img_path.name}")
