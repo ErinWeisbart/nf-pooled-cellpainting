@@ -9,7 +9,7 @@ process CELLPROFILER_ILLUMCALC {
         : 'community.wave.seqera.io/library/cellprofiler:4.2.8--aff0a99749304a7f'}"
 
     input:
-    tuple val(meta), val(channels), val(cycle), path(images, stageAs: "images*/*"), val(image_metas)
+    tuple val(meta), val(channels), val(cycle), path(images), val(image_metas)
     path illumination_cppipe
     val has_cycles
 
@@ -31,15 +31,51 @@ process CELLPROFILER_ILLUMCALC {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
-    # Build a JSON map of {basename: staged_relative_path} from images*/ subdirs
-    # so generate_load_data_csv.py can write the correct path (e.g. images11/file.tiff)
-    python3 -c "
-import json, os, glob
-mapping = {}
-for f in glob.glob('images*/*'):
-    mapping[os.path.basename(f)] = f
-print(json.dumps(mapping))
-" > staged_paths.json
+    # Organize files into metadata-based directories: {plate}-{well}-{site}/
+    python3 <<'ORGANIZE_FILES'
+import json, os, shutil, glob
+
+# Load metadata
+with open('metadata.json') as f:
+    metadata = json.load(f)
+
+# Build filename -> metadata record mapping
+meta_map = {}
+for record in metadata:
+    fname = os.path.basename(record['filename'])
+    meta_map[fname] = record
+
+# Create directories and move files based on metadata
+staged_paths = {}
+for img_file in glob.glob('*'):
+    if not os.path.isfile(img_file) or img_file in ['metadata.json', 'staged_paths.json']:
+        continue
+    
+    basename = os.path.basename(img_file)
+    if basename in meta_map:
+        rec = meta_map[basename]
+        plate = rec['plate']
+        well = rec['well']
+        site = rec['site']
+        
+        # Create directory: {plate}-{well}-{site}
+        dir_name = f"{plate}-{well}-{site}"
+        os.makedirs(dir_name, exist_ok=True)
+        
+        # Move file into directory
+        dest_path = os.path.join(dir_name, basename)
+        shutil.move(img_file, dest_path)
+        
+        # Record staged path for CSV generation
+        staged_paths[basename] = dest_path
+    else:
+        # File not in metadata - keep as-is
+        staged_paths[basename] = basename
+
+# Write staged paths mapping
+with open('staged_paths.json', 'w') as f:
+    json.dump(staged_paths, f)
+ORGANIZE_FILES
 
     # Generate load_data.csv
     generate_load_data_csv.py \\

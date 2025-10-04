@@ -7,7 +7,7 @@ process CELLPROFILER_ILLUMAPPLY {
         : 'community.wave.seqera.io/library/cellprofiler:4.2.8--aff0a99749304a7f'}"
 
     input:
-    tuple val(meta), val(channels), val(cycles), path(images, stageAs: "images/img?/*"), val(image_metas), path(npy_files, stageAs: "images/")
+    tuple val(meta), val(channels), val(cycles), path(images), val(image_metas), path(npy_files, stageAs: "images/")
     path illumination_apply_cppipe
     val has_cycles
 
@@ -29,17 +29,59 @@ process CELLPROFILER_ILLUMAPPLY {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
-    # Build a JSON map of {basename: path-relative-to-images/} from images/img?/ subdirs
-    # CellProfiler uses --image-directory ./images/ so paths in load_data.csv must be
-    # relative to that directory (e.g. img1/file.tiff, not images/img1/file.tiff)
-    python3 -c "
-import json, os, glob
-mapping = {}
-for f in glob.glob('images/img*/*'):
-    # strip the leading 'images/' prefix so CellProfiler resolves correctly
-    mapping[os.path.basename(f)] = os.path.relpath(f, 'images')
-print(json.dumps(mapping))
-" > staged_paths.json
+    # Organize files into metadata-based directories: images/{plate}-{well}-{site}/
+    python3 <<'ORGANIZE_FILES'
+import json, os, shutil, glob
+
+# Load metadata
+with open('metadata.json') as f:
+    metadata = json.load(f)
+
+# Create images/ directory if it doesn't exist
+os.makedirs('images', exist_ok=True)
+
+# Build filename -> metadata record mapping
+meta_map = {}
+for record in metadata:
+    fname = os.path.basename(record['filename'])
+    meta_map[fname] = record
+
+# Move image files into metadata-based directories under images/
+staged_paths = {}
+for img_file in glob.glob('*'):
+    if not os.path.isfile(img_file) or img_file in ['metadata.json', 'staged_paths.json']:
+        continue
+    
+    basename = os.path.basename(img_file)
+    # Skip .npy files (illumination corrections - already in images/)
+    if basename.endswith('.npy'):
+        continue
+        
+    if basename in meta_map:
+        rec = meta_map[basename]
+        plate = rec['plate']
+        well = rec['well']
+        site = rec['site']
+        
+        # Create directory: images/{plate}-{well}-{site}
+        dir_name = f"images/{plate}-{well}-{site}"
+        os.makedirs(dir_name, exist_ok=True)
+        
+        # Move file into directory
+        dest_path = os.path.join(dir_name, basename)
+        shutil.move(img_file, dest_path)
+        
+        # Record path relative to images/ for CellProfiler
+        # (CellProfiler uses --image-directory ./images/)
+        staged_paths[basename] = f"{plate}-{well}-{site}/{basename}"
+    else:
+        # File not in metadata - keep as-is
+        staged_paths[basename] = basename
+
+# Write staged paths mapping
+with open('staged_paths.json', 'w') as f:
+    json.dump(staged_paths, f)
+ORGANIZE_FILES
 
     # Generate load_data.csv
     generate_load_data_csv.py \\
