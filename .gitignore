@@ -1,4 +1,5 @@
 .nextflow*
+nxf-tmp*
 work/
 data/
 results/

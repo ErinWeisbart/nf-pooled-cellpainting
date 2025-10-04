@@ -87,6 +87,7 @@ workflow BARCODING {
         true,
     )
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMCALC.out.versions)
+    
     // Merge load_data CSVs per plate
     CELLPROFILER_ILLUMCALC.out.load_data_csv
         .map { meta, csv ->
@@ -100,7 +101,7 @@ workflow BARCODING {
         .collectFile() { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/barcoding-illumcalc.load_data.csv",
-                csvs.collect { it.text }.join('')
+                csvs.collect { csv -> csv.text }.join('')
             ]
         }
         .map { csv_file ->

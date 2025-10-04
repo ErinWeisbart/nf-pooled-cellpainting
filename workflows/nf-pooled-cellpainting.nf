@@ -209,6 +209,12 @@ workflow POOLED_CELLPAINTING {
             }
             .set { ch_cropped_images }
 
+        // Collect all metadata from samples for path replacement BEFORE consuming channel
+        def ch_all_metadata = ch_cropped_images
+            .map { meta, images, metadata_for_json -> metadata_for_json.image_metadata }
+            .flatten()
+            .collect()
+
         CELLPROFILER_COMBINEDANALYSIS(
             ch_cropped_images,
             params.combinedanalysis_cppipe,
@@ -217,18 +223,13 @@ workflow POOLED_CELLPAINTING {
         )
         ch_versions = ch_versions.mix(CELLPROFILER_COMBINEDANALYSIS.out.versions)
         
-        // Collect all metadata from samples for path replacement
-        ch_all_metadata = ch_cropped_images
-            .map { meta, images, metadata_for_json -> metadata_for_json.image_metadata }
-            .flatten()
-            .collect()
-        
         // Merge load_data CSVs across all samples
-        ch_aggregated_csv = CELLPROFILER_COMBINEDANALYSIS.out.load_data_csv.collectFile(
-            name: "combined_analysis.load_data.csv",
-            keepHeader: true,
-            skip: 1,
-        )
+        def ch_aggregated_csv = CELLPROFILER_COMBINEDANALYSIS.out.load_data_csv
+            .collectFile(
+                name: "combined_analysis.load_data.csv",
+                keepHeader: true,
+                skip: 1,
+            )
         
         // Replace staged paths with native S3 paths in the final aggregated CSV
         REPLACE_PATHS_IN_LOADDATA(
