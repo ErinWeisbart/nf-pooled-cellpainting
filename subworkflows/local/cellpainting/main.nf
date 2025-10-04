@@ -78,13 +78,28 @@ workflow CELLPAINTING {
         painting_illumcalc_cppipe,
         false,
     )
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_ILLUMCALC.out.load_data_csv.collectFile(
-        name: "painting-illumcalc.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_ILLUMCALC.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/painting-illumcalc.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMCALC.out.versions)
 
@@ -174,13 +189,28 @@ workflow CELLPAINTING {
         false,
     )
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMAPPLY_PAINTING.out.versions)
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_ILLUMAPPLY_PAINTING.out.load_data_csv.collectFile(
-        name: "painting-illumapply.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_ILLUMAPPLY_PAINTING.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/painting-illumapply.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     //
     // 2 QC - ILLUMINATION CORRECTION APPLICATION INPUT/OUTPUT QC
@@ -285,13 +315,28 @@ workflow CELLPAINTING {
         range_skip,
     )
     ch_versions = ch_versions.mix(CELLPROFILER_SEGCHECK.out.versions)
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_SEGCHECK.out.load_data_csv.collectFile(
-        name: "painting-segcheck.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_SEGCHECK.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/painting-segcheck.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     //
     // 3 QC - SEGMENTATION CHECK MONTAGE QC

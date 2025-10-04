@@ -87,13 +87,28 @@ workflow BARCODING {
         true,
     )
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMCALC.out.versions)
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_ILLUMCALC.out.load_data_csv.collectFile(
-        name: "barcoding-illumcalc.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_ILLUMCALC.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/barcoding-illumcalc.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     //
     // 5 QC - ILLUMINATION CORRECTION CALCULATION QC
@@ -201,13 +216,28 @@ workflow BARCODING {
         true,
     )
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMAPPLY_BARCODING.out.versions)
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_ILLUMAPPLY_BARCODING.out.load_data_csv.collectFile(
-        name: "barcoding-illumapply.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_ILLUMAPPLY_BARCODING.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/barcoding-illumapply.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     //
     // 6 QC (ALIGN) - ILLUMINATION CORRECTION APPLICATION ALIGNMENT QC
@@ -328,13 +358,28 @@ workflow BARCODING {
         channel.fromPath([callbarcodes_plugin, compensatecolors_plugin]).collect(),
     )
     ch_versions = ch_versions.mix(CELLPROFILER_PREPROCESS.out.versions)
-    // Merge load_data CSVs across all samples
-    CELLPROFILER_PREPROCESS.out.load_data_csv.collectFile(
-        name: "barcoding-preprocess.load_data.csv",
-        keepHeader: true,
-        skip: 1,
-        storeDir: "${outdir}/workspace/load_data_csv/",
-    )
+    // Merge load_data CSVs per plate
+    CELLPROFILER_PREPROCESS.out.load_data_csv
+        .map { meta, csv ->
+            def group_key = [batch: meta.batch, plate: meta.plate]
+            [group_key, csv]
+        }
+        .groupTuple()
+        .map { meta, csvs ->
+            [meta, csvs.flatten()]
+        }
+        .collectFile() { meta, csvs ->
+            [
+                "${meta.batch}/${meta.plate}/barcoding-preprocess.load_data.csv",
+                csvs.collect { it.text }.join('')
+            ]
+        }
+        .map { csv_file ->
+            // Store in Batch/Plate subfolder structure
+            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
+            csv_file.copyTo(output_path)
+            csv_file
+        }
 
     //
     // 7 QC (BARCODE CALLS) - BARCODE PREPROCESSING BARCODE CALLS QC
