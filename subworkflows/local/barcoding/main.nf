@@ -197,21 +197,7 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
-    // QC: Duplication Check (ILLUMAPPLY)
-    // Collect all CSV files from ILLUMAPPLY output
-    ch_illumapply_csvs = CELLPROFILER_ILLUMAPPLY_BARCODING.out.corrected_images
-        .map { meta, tiffs, csvs -> csvs }
-        .flatten()
-        .filter { it.name.endsWith('Image.csv') }
-        .collect()
-    
-    QC_ILLUMAPPLY_DUP_CHECK(
-        'illumapply',
-        ch_illumapply_csvs
-    )
-    ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
-
-    // QC of barcode alignment
+    // QC of barcode alignment and duplication check
     // First, collect cycle information from the samplesheet to infer num_cycles
     ch_plate_cycles = ch_samplesheet_sbs
         .map { meta, _image ->
@@ -249,6 +235,18 @@ workflow BARCODING {
             def unique_wells = wells.unique()
             [qc_meta, unique_wells, csv_files, num_cycles]
         }
+
+    // QC: Duplication Check (ILLUMAPPLY) - per plate
+    // Use the same CSV files that go to QC_BARCODEALIGN
+    ch_illumapply_dup_check = ch_qc_barcode_input
+        .map { qc_meta, _wells, csv_files, _num_cycles ->
+            [qc_meta, csv_files]
+        }
+    
+    QC_ILLUMAPPLY_DUP_CHECK(
+        ch_illumapply_dup_check
+    )
+    ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
 
     QC_BARCODEALIGN(
         ch_qc_barcode_input,
@@ -315,20 +313,6 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
-    //// QC: Duplication Check (PREPROCESS) ////
-    // Collect all CSV files from PREPROCESS output
-    ch_preprocess_csvs = CELLPROFILER_PREPROCESS.out.preprocess_stats
-        .map { meta, csvs -> csvs }
-        .flatten()
-        .filter { it.name.endsWith('Image.csv') }
-        .collect()
-    
-    QC_PREPROCESS_DUP_CHECK(
-        'preprocess',
-        ch_preprocess_csvs
-    )
-    ch_versions = ch_versions.mix(QC_PREPROCESS_DUP_CHECK.out.versions)
-
     //// QC: Barcode preprocessing ////
     // Group preprocessing stats by plate and collect wells
     ch_preprocess_qc_input = CELLPROFILER_PREPROCESS.out.preprocess_stats
@@ -337,24 +321,40 @@ workflow BARCODING {
                 batch: meta.batch,
                 plate: meta.plate,
             ]
-            // Find the BarcodePreprocess_Image.csv file
-            def image_csv = csv_files.find { file -> file.name.contains('BarcodePreprocessing_Foci.csv') }
-            [plate_key, meta.well, image_csv]
+            // Find the BarcodePreprocessing_Image.csv file for QC_PREPROCESS
+            def foci_csv = csv_files.find { file -> file.name.contains('BarcodePreprocessing_Foci.csv') }
+            // Find the BarcodePreprocessing_Image.csv file for duplication check
+            def image_csv = csv_files.find { file -> file.name.contains('Image.csv') }
+            [plate_key, meta.well, foci_csv, image_csv]
         }
         .groupTuple()
         .combine(ch_plate_cycles, by: 0)
-        .map { plate_key, wells, csvs, num_cycles ->
+        .map { plate_key, wells, foci_csvs, image_csvs, num_cycles ->
             def qc_meta = plate_key + [
                 arm: "barcoding",
                 id: "${plate_key.batch}_${plate_key.plate}",
             ]
             // Remove duplicate wells since we now have site-level data
             def unique_wells = wells.unique()
-            [qc_meta, unique_wells, csvs, num_cycles]
+            [qc_meta, unique_wells, foci_csvs, image_csvs, num_cycles]
         }
 
+    //// QC: Duplication Check (PREPROCESS) - per plate ////
+    ch_preprocess_dup_check = ch_preprocess_qc_input
+        .map { qc_meta, _wells, _foci_csvs, image_csvs, _num_cycles ->
+            def meta_with_mode = qc_meta + [mode: 'preprocess']
+            [meta_with_mode, image_csvs]
+        }
+    
+    QC_PREPROCESS_DUP_CHECK(
+        ch_preprocess_dup_check
+    )
+    ch_versions = ch_versions.mix(QC_PREPROCESS_DUP_CHECK.out.versions)
+
     QC_PREPROCESS(
-        ch_preprocess_qc_input,
+        ch_preprocess_qc_input.map { qc_meta, wells, foci_csvs, _image_csvs, num_cycles ->
+            [qc_meta, wells, foci_csvs, num_cycles]
+        },
         file("${projectDir}/bin/qc_barcode_preprocess.py"),
         barcodes,
         acquisition_geometry_rows,

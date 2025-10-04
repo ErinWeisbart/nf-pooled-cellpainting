@@ -112,7 +112,9 @@ def check_correlation_columns(csv_file: Path, mode: str, threshold: float = 0.99
     }
 
 
-def generate_report(results: list, output_file: str, mode: str, threshold: float) -> None:
+def generate_report(
+    results: list, output_file: str, mode: str, threshold: float, batch: str = None, plate: str = None
+) -> None:
     """
     Generate a text report summarizing the correlation check results.
 
@@ -121,10 +123,14 @@ def generate_report(results: list, output_file: str, mode: str, threshold: float
         output_file: Path to output report file
         mode: The mode used ('illumapply' or 'preprocess')
         threshold: The correlation threshold used
+        batch: Optional batch identifier for per-plate reports
+        plate: Optional plate identifier for per-plate reports
     """
     with open(output_file, "w") as f:
         f.write("=" * 80 + "\n")
         f.write(f"QC Duplication Check Report - Mode: {mode.upper()}\n")
+        if batch and plate:
+            f.write(f"Batch: {batch}, Plate: {plate}\n")
         f.write(f"Correlation Threshold: {threshold}\n")
         f.write("=" * 80 + "\n\n")
 
@@ -190,10 +196,24 @@ def main():
         default=0.99,
         help="Correlation threshold above which to report (default: 0.99)",
     )
+    parser.add_argument(
+        "--batch",
+        type=str,
+        default=None,
+        help="Batch identifier for per-plate reporting",
+    )
+    parser.add_argument(
+        "--plate",
+        type=str,
+        default=None,
+        help="Plate identifier for per-plate reporting",
+    )
 
     args = parser.parse_args()
 
     print(f"QC Duplication Check - Mode: {args.mode}")
+    if args.batch and args.plate:
+        print(f"Batch: {args.batch}, Plate: {args.plate}")
     print(f"Input directory: {args.input_dir}")
     print(f"Correlation threshold: {args.threshold}")
 
@@ -228,7 +248,7 @@ def main():
             print(f"  OK: No high correlations detected")
 
     # Generate report
-    generate_report(results, args.output_report, args.mode, args.threshold)
+    generate_report(results, args.output_report, args.mode, args.threshold, args.batch, args.plate)
     print(f"\nReport written to: {args.output_report}")
 
     # Determine exit status

@@ -1,21 +1,22 @@
 process QC_DUP_CHECK {
-    tag "${mode}"
+    tag "${meta.id}"
     label 'qc'
 
     container 'community.wave.seqera.io/library/ipykernel_jupytext_nbconvert_pandas_pruned:c397cee54f4ab064'
 
     input:
-    val mode
-    path csv_files
+    tuple val(meta), path(csv_files)
 
     output:
-    path "qc_dup_check_report_${mode}.txt", emit: report
+    tuple val(meta), path("qc_dup_check_report_*.txt"), emit: report
     path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    def mode = meta.containsKey('mode') ? meta.mode : 'illumapply'
+    def report_name = "qc_dup_check_report_${meta.batch}_${meta.plate}_${mode}.txt"
     """
     # Create a directory to hold all CSV files
     mkdir -p csv_input
@@ -35,8 +36,10 @@ process QC_DUP_CHECK {
     qc_dup_check.py \\
         ${mode} \\
         --input-dir ./csv_input \\
-        --output-report qc_dup_check_report_${mode}.txt \\
-        --threshold 0.99
+        --output-report ${report_name} \\
+        --threshold 0.99 \\
+        --batch ${meta.batch} \\
+        --plate ${meta.plate}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -46,8 +49,10 @@ process QC_DUP_CHECK {
     """
 
     stub:
+    def mode = meta.containsKey('mode') ? meta.mode : 'illumapply'
+    def report_name = "qc_dup_check_report_${meta.batch}_${meta.plate}_${mode}.txt"
     """
-    touch qc_dup_check_report_${mode}.txt
+    touch ${report_name}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
