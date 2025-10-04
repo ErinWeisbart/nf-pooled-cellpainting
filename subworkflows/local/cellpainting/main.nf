@@ -179,12 +179,14 @@ workflow CELLPAINTING {
         .map { site_meta, channels, cycles, images, image_metas ->
             // Create sort key for deterministic ordering
             def sort_key = "${site_meta.batch}_${site_meta.plate}_${site_meta.well}_${site_meta.site}"
-            [sort_key, site_meta, channels, images]
+            // Collect all unique channel names for QC comparison
+            def all_channels = image_metas.collect { it.channels }.unique().sort()
+            [sort_key, site_meta, all_channels, images]
         }
         .toSortedList { a, b -> a[0] <=> b[0] }
         .flatMap { sorted_list -> sorted_list.take(1) }
-        .map { sort_key, site_meta, channels, images ->
-            [site_meta, channels, images]
+        .map { sort_key, site_meta, all_channels, images ->
+            [site_meta, all_channels, images]
         }
 
     // Select the first site from corrected images
