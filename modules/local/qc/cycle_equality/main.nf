@@ -2,9 +2,7 @@ process QC_CYCLE_EQUALITY {
     tag "${meta.id}_${stage}"
     label 'process_low'
 
-    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'oras://community.wave.seqera.io/library/pip_numpy_scikit-image:56e0d6a8df025890'
-        : 'community.wave.seqera.io/library/pip_numpy_scikit-image:9c9207913d10b50f'}"
+    container 'wave.seqera.io/wt/3a135513c8da/library/numpy_python_pip_pillow:74310e9b76ff61b6'
 
     input:
     tuple val(meta), path(images)
