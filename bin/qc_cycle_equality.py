@@ -16,7 +16,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-from skimage import io
+from PIL import Image
 
 
 def parse_filename(filename):
@@ -81,8 +81,9 @@ def images_are_equal(img1_path, img2_path):
         bool: True if images are identical, False otherwise
     """
     try:
-        img1 = io.imread(str(img1_path))
-        img2 = io.imread(str(img2_path))
+        # Load images using PIL and convert to numpy arrays
+        img1 = np.array(Image.open(img1_path))
+        img2 = np.array(Image.open(img2_path))
         
         # Check if shapes match
         if img1.shape != img2.shape:

@@ -27,7 +27,7 @@ process QC_CYCLE_EQUALITY {
     "${task.process}":
         python: \$(python3 --version | sed 's/Python //g')
         numpy: \$(python3 -c "import numpy; print(numpy.__version__)")
-        skimage: \$(python3 -c "import skimage; print(skimage.__version__)")
+        pillow: \$(python3 -c "import PIL; print(PIL.__version__)")
     END_VERSIONS
     """
 }
