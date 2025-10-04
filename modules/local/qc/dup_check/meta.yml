@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "qc_dup_check"
+description: |
+  Check CellProfiler Image.csv output files for high correlation values that may indicate duplicate images.
+  This QC module analyzes columns containing "Correlation_Correlation" and reports values > 0.99.
+keywords:
+  - qc
+  - quality control
+  - correlation
+  - duplicates
+  - cellprofiler
+tools:
+  - python:
+      description: |
+        Python script for analyzing CellProfiler correlation data
+      homepage: https://www.python.org/
+      documentation: https://www.python.org/doc/
+  - pandas:
+      description: |
+        pandas is a fast, powerful, flexible and easy to use open source data analysis and manipulation tool
+      homepage: https://pandas.pydata.org/
+      documentation: https://pandas.pydata.org/docs/
+      tool_dev_url: https://github.com/pandas-dev/pandas
+
+input:
+  - mode:
+      type: string
+      description: |
+        Mode to determine which CSV files to check. Options:
+        - 'illumapply': Check *IllumApplication_Image.csv files from CELLPROFILER_ILLUMAPPLY
+        - 'preprocess': Check BarcodePreprocessing_Image.csv files from CELLPROFILER_PREPROCESS
+      pattern: "illumapply|preprocess"
+  - csv_files:
+      type: file
+      description: |
+        Collection of CSV files to check for duplicate images.
+        Should be Image.csv files from CellProfiler output.
+      pattern: "*Image.csv"
+
+output:
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - report:
+      type: file
+      description: Text report summarizing correlation check results
+      pattern: "qc_dup_check_report_*.txt"
+
+authors:
+  - "@seqera-ai"
+maintainers:
+  - "@seqera-ai"

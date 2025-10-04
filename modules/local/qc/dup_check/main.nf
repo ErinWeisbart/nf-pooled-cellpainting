@@ -1,0 +1,53 @@
+process QC_DUP_CHECK {
+    tag "${mode}"
+    label 'qc'
+
+    container 'community.wave.seqera.io/library/pandas_pruned:86c2d07ac01c75d0'
+
+    input:
+    val mode
+    path csv_files
+
+    output:
+    path "qc_dup_check_report_${mode}.txt", emit: report
+    path "versions.yml", emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    """
+    # Create a directory to hold all CSV files
+    mkdir -p csv_input
+    
+    # Copy all CSV files that end with Image.csv to the input directory
+    for file in ${csv_files}; do
+        if [[ "\$file" == *Image.csv ]]; then
+            cp "\$file" csv_input/
+        fi
+    done
+
+    qc_dup_check.py \\
+        ${mode} \\
+        --input-dir ./csv_input \\
+        --output-report qc_dup_check_report_${mode}.txt \\
+        --threshold 0.99
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //')
+        pandas: \$(python -c "import pandas; print(pandas.__version__)")
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch qc_dup_check_report_${mode}.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: 3.11.0
+        pandas: 2.0.0
+    END_VERSIONS
+    """
+}

@@ -198,8 +198,16 @@ workflow BARCODING {
     )
 
     // QC: Duplication Check (ILLUMAPPLY)
+    // Collect all CSV files from ILLUMAPPLY output
+    ch_illumapply_csvs = CELLPROFILER_ILLUMAPPLY_BARCODING.out.corrected_images
+        .map { meta, tiffs, csvs -> csvs }
+        .flatten()
+        .filter { it.name.endsWith('Image.csv') }
+        .collect()
+    
     QC_ILLUMAPPLY_DUP_CHECK(
         'illumapply',
+        ch_illumapply_csvs
     )
     ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
 
@@ -308,8 +316,16 @@ workflow BARCODING {
     )
 
     //// QC: Duplication Check (PREPROCESS) ////
+    // Collect all CSV files from PREPROCESS output
+    ch_preprocess_csvs = CELLPROFILER_PREPROCESS.out.preprocess_stats
+        .map { meta, csvs -> csvs }
+        .flatten()
+        .filter { it.name.endsWith('Image.csv') }
+        .collect()
+    
     QC_PREPROCESS_DUP_CHECK(
         'preprocess',
+        ch_preprocess_csvs
     )
     ch_versions = ch_versions.mix(QC_PREPROCESS_DUP_CHECK.out.versions)
 
