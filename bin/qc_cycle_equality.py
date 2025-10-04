@@ -29,7 +29,8 @@ def parse_filename(filename):
         dict: Metadata including plate, well, site, cycle, and channel
     """
     # Pattern: Plate_X_Well_Y_Site_Z_CycleNN_CHANNEL.tiff
-    pattern = r'Plate_?(\d+)_Well_?([A-Z]\d+)_Site_?(\d+)_Cycle(\d+)_(.+)\.tiff?'
+    # Allow alphanumeric plate IDs (e.g., BR00149745), alphanumeric wells, numeric sites
+    pattern = r'Plate_?([A-Za-z0-9]+)_Well_?([A-Z]\d+)_Site_?(\d+)_Cycle(\d+)_(.+)\.tiff?'
     match = re.match(pattern, filename, re.IGNORECASE)
     
     if not match:
