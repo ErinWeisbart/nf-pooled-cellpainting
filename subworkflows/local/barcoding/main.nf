@@ -7,7 +7,9 @@ include { CELLPROFILER_ILLUMCALC                                       } from '.
 include { QC_MONTAGEILLUM as QC_MONTAGEILLUM_BARCODING                 } from '../../../modules/local/qc/montageillum'
 include { QC_MONTAGEILLUM as QC_MONTAGE_STITCHCROP_BARCODING           } from '../../../modules/local/qc/montageillum'
 include { CELLPROFILER_ILLUMAPPLY as CELLPROFILER_ILLUMAPPLY_BARCODING } from '../../../modules/local/cellprofiler/illumapply'
+include { QC_CYCLE_EQUALITY as QC_CYCLE_EQUALITY_ILLUMAPPLY            } from '../../../modules/local/qc/cycle_equality'
 include { CELLPROFILER_PREPROCESS                                      } from '../../../modules/local/cellprofiler/preprocess'
+include { QC_CYCLE_EQUALITY as QC_CYCLE_EQUALITY_PREPROCESS            } from '../../../modules/local/qc/cycle_equality'
 include { QC_PREPROCESS                                                } from '../../../modules/local/qc/preprocess'
 include { FIJI_STITCHCROP                                              } from '../../../modules/local/fiji/stitchcrop'
 include { QC_BARCODEALIGN                                              } from '../../../modules/local/qc/barcodealign'
@@ -195,6 +197,26 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
+    // QC: Cycle Equality Check (ILLUMAPPLY)
+    // Select first plate/well/site for cycle equality testing
+    ch_illumapply_qc_equality = CELLPROFILER_ILLUMAPPLY_BARCODING.out.corrected_images
+        .map { group_meta, images, _csv ->
+            // Create a sortable key: plate_well_site
+            def sort_key = "${group_meta.plate}_${group_meta.well}_${group_meta.site ?: '0'}"
+            [sort_key, group_meta, images]
+        }
+        .toSortedList { a, b -> a[0] <=> b[0] }  // Sort by plate_well_site
+        .flatMap { sorted_list ->
+            // Take only the first entry
+            sorted_list.isEmpty() ? [] : [[sorted_list[0][1], sorted_list[0][2]]]
+        }
+
+    QC_CYCLE_EQUALITY_ILLUMAPPLY(
+        ch_illumapply_qc_equality,
+        'illumapply',
+    )
+    ch_versions = ch_versions.mix(QC_CYCLE_EQUALITY_ILLUMAPPLY.out.versions)
+
     // QC of barcode alignment
     // First, collect cycle information from the samplesheet to infer num_cycles
     ch_plate_cycles = ch_samplesheet_sbs
@@ -298,6 +320,26 @@ workflow BARCODING {
         skip: 1,
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
+
+    //// QC: Cycle Equality Check (PREPROCESS) ////
+    // Select first plate/well/site for cycle equality testing
+    ch_preprocess_qc_equality = CELLPROFILER_PREPROCESS.out.preprocessed_images
+        .map { meta, images ->
+            // Create a sortable key: plate_well_site
+            def sort_key = "${meta.plate}_${meta.well}_${meta.site ?: '0'}"
+            [sort_key, meta, images]
+        }
+        .toSortedList { a, b -> a[0] <=> b[0] }  // Sort by plate_well_site
+        .flatMap { sorted_list ->
+            // Take only the first entry
+            sorted_list.isEmpty() ? [] : [[sorted_list[0][1], sorted_list[0][2]]]
+        }
+
+    QC_CYCLE_EQUALITY_PREPROCESS(
+        ch_preprocess_qc_equality,
+        'preprocess',
+    )
+    ch_versions = ch_versions.mix(QC_CYCLE_EQUALITY_PREPROCESS.out.versions)
 
     //// QC: Barcode preprocessing ////
     // Group preprocessing stats by plate and collect wells
