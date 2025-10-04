@@ -29,15 +29,55 @@ process CELLPROFILER_ILLUMAPPLY {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
-    # Build a JSON map of {basename: path-relative-to-images/} from images/img?/ subdirs
+    # Build a JSON map of staged paths that handles duplicate filenames
+    # Uses both basename and staging_index from metadata to create unique keys
     # CellProfiler uses --image-directory ./images/ so paths in load_data.csv must be
     # relative to that directory (e.g. img1/file.tiff, not images/img1/file.tiff)
     python3 -c "
 import json, os, glob
+
+# Read metadata to get staging indices
+with open('metadata.json') as f:
+    metadata = json.load(f)
+
+# Create staging_index lookup: filename -> list of staging indices
+filename_indices = {}
+for record in metadata:
+    filename = record['filename']
+    staging_idx = record.get('staging_index', 0)
+    if filename not in filename_indices:
+        filename_indices[filename] = []
+    filename_indices[filename].append(staging_idx)
+
+# Build mapping from staged files
+# Group staged files by basename
+staged_by_basename = {}
+for f in sorted(glob.glob('images/img*/*')):
+    basename = os.path.basename(f)
+    # Store path relative to 'images/' for CellProfiler
+    relative_path = os.path.relpath(f, 'images')
+    if basename not in staged_by_basename:
+        staged_by_basename[basename] = []
+    staged_by_basename[basename].append(relative_path)
+
+# Create final mapping
 mapping = {}
-for f in glob.glob('images/img*/*'):
-    # strip the leading 'images/' prefix so CellProfiler resolves correctly
-    mapping[os.path.basename(f)] = os.path.relpath(f, 'images')
+for basename, staged_paths in staged_by_basename.items():
+    indices = filename_indices.get(basename, [])
+    
+    if len(staged_paths) == 1:
+        # Only one file with this basename - simple mapping
+        mapping[basename] = staged_paths[0]
+        # Also create indexed keys for consistency
+        for idx in indices:
+            mapping[f'{basename}|{idx}'] = staged_paths[0]
+    else:
+        # Multiple files with same basename - use indexed keys
+        for idx, path in zip(sorted(indices), sorted(staged_paths)):
+            mapping[f'{basename}|{idx}'] = path
+        # Also add a fallback simple key (points to first occurrence)
+        mapping[basename] = sorted(staged_paths)[0]
+
 print(json.dumps(mapping))
 " > staged_paths.json
 
