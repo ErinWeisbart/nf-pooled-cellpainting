@@ -31,13 +31,51 @@ process CELLPROFILER_ILLUMCALC {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
-    # Build a JSON map of {basename: staged_relative_path} from images*/ subdirs
-    # so generate_load_data_csv.py can write the correct path (e.g. images11/file.tiff)
+    # Build a JSON map of staged paths that handles duplicate filenames
+    # Uses both basename and staging_index from metadata to create unique keys
     python3 -c "
 import json, os, glob
+
+# Read metadata to get staging indices
+with open('metadata.json') as f:
+    metadata = json.load(f)
+
+# Create staging_index lookup: filename -> list of staging indices
+filename_indices = {}
+for record in metadata:
+    filename = record['filename']
+    staging_idx = record.get('staging_index', 0)
+    if filename not in filename_indices:
+        filename_indices[filename] = []
+    filename_indices[filename].append(staging_idx)
+
+# Build mapping from staged files
+# Group staged files by basename
+staged_by_basename = {}
+for f in sorted(glob.glob('images*/*')):
+    basename = os.path.basename(f)
+    if basename not in staged_by_basename:
+        staged_by_basename[basename] = []
+    staged_by_basename[basename].append(f)
+
+# Create final mapping
 mapping = {}
-for f in glob.glob('images*/*'):
-    mapping[os.path.basename(f)] = f
+for basename, staged_paths in staged_by_basename.items():
+    indices = filename_indices.get(basename, [])
+    
+    if len(staged_paths) == 1:
+        # Only one file with this basename - simple mapping
+        mapping[basename] = staged_paths[0]
+        # Also create indexed keys for consistency
+        for idx in indices:
+            mapping[f'{basename}|{idx}'] = staged_paths[0]
+    else:
+        # Multiple files with same basename - use indexed keys
+        for idx, path in zip(sorted(indices), sorted(staged_paths)):
+            mapping[f'{basename}|{idx}'] = path
+        # Also add a fallback simple key (points to first occurrence)
+        mapping[basename] = sorted(staged_paths)[0]
+
 print(json.dumps(mapping))
 " > staged_paths.json
 

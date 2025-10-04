@@ -59,8 +59,14 @@ workflow CELLPAINTING {
         .groupTuple()
         .map { meta, images_meta_list, images_list ->
             def all_channels = images_meta_list[0].channels
+            
+            // Add staging_index to each image metadata to handle duplicate filenames
+            def indexed_metas = images_meta_list.withIndex().collect { img_meta, idx ->
+                img_meta + [staging_index: idx]
+            }
+            
             // Return tuple: (shared meta, channels, cycles, images, per-image metadata)
-            [meta, all_channels, null, images_list, images_meta_list]
+            [meta, all_channels, null, images_list, indexed_metas]
         }
 
     // Calculate illumination correction profiles

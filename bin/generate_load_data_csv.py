@@ -50,12 +50,26 @@ def load_staged_paths(path):
         return json.load(fh)
 
 
-def remap_filename(filename, staged_map):
-    """Return the staged relative path for *filename* if available, else filename unchanged."""
+def remap_filename(filename, staged_map, staging_index=None):
+    """Return the staged relative path for *filename* if available, else filename unchanged.
+    
+    Args:
+        filename: The base filename to look up
+        staged_map: Dictionary mapping filenames/keys to staged paths
+        staging_index: Optional index for handling duplicate filenames
+    """
     if not staged_map:
         return filename
     import os
     basename = os.path.basename(filename)
+    
+    # Try indexed key first if staging_index is provided
+    if staging_index is not None:
+        indexed_key = f"{basename}|{staging_index}"
+        if indexed_key in staged_map:
+            return staged_map[indexed_key]
+    
+    # Fallback to basename only
     return staged_map.get(basename, filename)
 
 
@@ -104,7 +118,8 @@ def find_row(site_rows, channel, cycle=None):
 
 def get_file_and_frame(row, channel, staged_map=None):
     idx = row["_channels"].index(channel)
-    fn  = remap_filename(row["filename"], staged_map)
+    staging_index = row.get("staging_index")
+    fn  = remap_filename(row["filename"], staged_map, staging_index)
     return fn, row["_frames"][idx]
 
 def make_site_row(plate, well, site):
