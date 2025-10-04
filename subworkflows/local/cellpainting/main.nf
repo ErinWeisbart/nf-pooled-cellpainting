@@ -7,6 +7,7 @@ include { CELLPROFILER_ILLUMCALC                                      } from '..
 include { QC_MONTAGEILLUM as QC_MONTAGEILLUM_PAINTING                 } from '../../../modules/local/qc/montageillum'
 include { QC_MONTAGEILLUM as QC_MONTAGE_SEGCHECK                      } from '../../../modules/local/qc/montageillum'
 include { QC_MONTAGEILLUM as QC_MONTAGE_STITCHCROP_PAINTING           } from '../../../modules/local/qc/montageillum'
+include { QC_ILLUMCOMPARE                                             } from '../../../modules/local/qc/illumcompare'
 include { CELLPROFILER_ILLUMAPPLY as CELLPROFILER_ILLUMAPPLY_PAINTING } from '../../../modules/local/cellprofiler/illumapply'
 include { CELLPROFILER_SEGCHECK                                       } from '../../../modules/local/cellprofiler/segcheck'
 include { FIJI_STITCHCROP                                             } from '../../../modules/local/fiji/stitchcrop'
@@ -171,6 +172,62 @@ workflow CELLPAINTING {
         skip: 1,
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
+
+    //// QC: Compare raw vs corrected images for first plate/well/site ////
+    // Select the first site from raw images
+    ch_first_raw_site = ch_images_by_site
+        .map { site_meta, channels, cycles, images, image_metas ->
+            // Create sort key for deterministic ordering
+            def sort_key = "${site_meta.batch}_${site_meta.plate}_${site_meta.well}_${site_meta.site}"
+            [sort_key, site_meta, channels, images]
+        }
+        .toSortedList { a, b -> a[0] <=> b[0] }
+        .flatMap { sorted_list -> sorted_list.take(1) }
+        .map { sort_key, site_meta, channels, images ->
+            [site_meta, channels, images]
+        }
+
+    // Select the first site from corrected images
+    ch_first_corrected_site = CELLPROFILER_ILLUMAPPLY_PAINTING.out.corrected_images
+        .map { meta, images, _csv ->
+            // Create sort key for deterministic ordering
+            def sort_key = "${meta.batch}_${meta.plate}_${meta.well}_${meta.site}"
+            [sort_key, meta, images]
+        }
+        .toSortedList { a, b -> a[0] <=> b[0] }
+        .flatMap { sorted_list -> sorted_list.take(1) }
+        .map { sort_key, meta, images ->
+            [meta, images]
+        }
+
+    // Combine raw and corrected images for QC comparison
+    ch_illum_qc_input = ch_first_raw_site
+        .map { site_meta, channels, raw_images ->
+            def site_key = [
+                batch: site_meta.batch,
+                plate: site_meta.plate,
+                well: site_meta.well,
+                site: site_meta.site,
+            ]
+            [site_key, site_meta + [channels: channels], raw_images]
+        }
+        .join(
+            ch_first_corrected_site.map { meta, corrected_images ->
+                def site_key = [
+                    batch: meta.batch,
+                    plate: meta.plate,
+                    well: meta.well,
+                    site: meta.site,
+                ]
+                [site_key, corrected_images]
+            }
+        )
+        .map { _site_key, enriched_meta, raw_images, corrected_images ->
+            [enriched_meta, raw_images, corrected_images]
+        }
+
+    QC_ILLUMCOMPARE(ch_illum_qc_input)
+    ch_versions = ch_versions.mix(QC_ILLUMCOMPARE.out.versions)
 
     // Reshape CELLPROFILER_ILLUMAPPLY_PAINTING output for SEGCHECK
     // Group by well (not site) so range_skip can select every nth image from the well
