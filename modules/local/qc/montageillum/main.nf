@@ -1,5 +1,5 @@
 process QC_MONTAGEILLUM {
-    tag "${meta.plate}"
+    tag "${meta.well ? meta.plate + '_' + meta.well : meta.plate}"
     label 'qc'
 
     container "community.wave.seqera.io/library/numpy_python_pip_pillow:74310e9b76ff61b6"
@@ -16,7 +16,9 @@ process QC_MONTAGEILLUM {
     task.ext.when == null || task.ext.when
 
     script:
-    def output_name = "${meta.arm}.${meta.batch}_${meta.plate}.montage.png"
+    def output_name = meta.well 
+        ? "${meta.arm}.${meta.batch}_${meta.plate}_${meta.well}.montage.png"
+        : "${meta.arm}.${meta.batch}_${meta.plate}.montage.png"
     """
     montage.py \\
         . \\

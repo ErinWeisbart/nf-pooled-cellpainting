@@ -217,14 +217,11 @@ workflow CELLPAINTING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
-    // Reshape CELLPROFILER_SEGCHECK output for QC montage
+    // Reshape CELLPROFILER_SEGCHECK output for QC montage (per-well)
     ch_segcheck_qc = CELLPROFILER_SEGCHECK.out.segcheck_res
-        .map { meta, _ch_versionscsv_files, png_files ->
-            [meta.subMap(['batch', 'plate']) + [arm: "painting"], png_files]
-        }
-        .groupTuple()
-        .map { meta, png_files_list ->
-            [meta, png_files_list.flatten().sort { it -> it.name }]
+        .map { meta, _csv_files, png_files ->
+            // Keep well in metadata for per-well montages
+            [meta.subMap(['batch', 'plate', 'well']) + [arm: "painting"], png_files]
         }
 
     QC_MONTAGE_SEGCHECK(
