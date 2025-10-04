@@ -69,7 +69,10 @@ workflow BARCODING {
             [group_key, image_meta, image]
         }
         .groupTuple()
-        .map { meta, images_meta_list, images_list ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def images_meta_list = tuple[1]
+            def images_list = tuple[2]
             def all_channels = images_meta_list[0].channels
             
             // Add staging_index to each image metadata to handle duplicate filenames
@@ -105,7 +108,9 @@ workflow BARCODING {
             [meta.subMap(['batch', 'plate']) + [arm: "barcoding"], npy_files]
         }
         .groupTuple()
-        .map { meta, npy_files_list ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def npy_files_list = tuple[1]
             [meta, npy_files_list.flatten()]
         }
 
@@ -149,7 +154,11 @@ workflow BARCODING {
             [group_key + [id: group_id], image_meta, image]
         }
         .groupTuple()
-        .map { group_meta, images_meta_list, images_list ->
+        .map { tuple ->
+            def group_meta = tuple[0]
+            def images_meta_list = tuple[1]
+            def images_list = tuple[2]
+            
             // Get unique cycles and channels for this group
             // For barcoding, we expect multiple cycles
             def all_cycles = images_meta_list.collect { m -> m.cycle }.findAll { c -> c != null }.unique().sort()
@@ -176,7 +185,9 @@ workflow BARCODING {
             [group_key, npy_files]
         }
         .groupTuple()
-        .map { meta, npy_files_list ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def npy_files_list = tuple[1]
             [meta, npy_files_list.flatten()]
         }
 
@@ -224,7 +235,9 @@ workflow BARCODING {
             [plate_key, meta.cycle]
         }
         .groupTuple()
-        .map { plate_key, cycles ->
+        .map { tuple ->
+            def plate_key = tuple[0]
+            def cycles = tuple[1]
             def num_cycles = cycles.unique().max()
             [plate_key, num_cycles]
         }
@@ -242,7 +255,11 @@ workflow BARCODING {
         }
         .groupTuple()
         .combine(ch_plate_cycles, by: 0)
-        .map { plate_key, wells, csv_files, num_cycles ->
+        .map { tuple ->
+            def plate_key = tuple[0]
+            def wells = tuple[1]
+            def csv_files = tuple[2]
+            def num_cycles = tuple[3]
             def qc_meta = plate_key + [
                 arm: "barcoding",
                 id: "${plate_key.batch}_${plate_key.plate}",
@@ -355,7 +372,12 @@ workflow BARCODING {
         }
         .groupTuple()
         .combine(ch_plate_cycles, by: 0)
-        .map { plate_key, wells, foci_csvs, image_csvs, num_cycles ->
+        .map { tuple ->
+            def plate_key = tuple[0]
+            def wells = tuple[1]
+            def foci_csvs = tuple[2]
+            def image_csvs = tuple[3]
+            def num_cycles = tuple[4]
             def qc_meta = plate_key + [
                 arm: "barcoding",
                 id: "${plate_key.batch}_${plate_key.plate}",
@@ -412,7 +434,10 @@ workflow BARCODING {
             [well_key, meta.site, images]
         }
         .groupTuple()
-        .map { well_meta, site_list, images_list ->
+        .map { tuple ->
+            def well_meta = tuple[0]
+            def site_list = tuple[1]
+            def images_list = tuple[2]
             // Flatten all site images into one list for the well
             // Calculate the starting site number from metadata
             def min_site = site_list.min()
@@ -483,7 +508,9 @@ workflow BARCODING {
             [meta.subMap(['batch', 'plate']) + [arm: "barcoding"], tiff_files]
         }
         .groupTuple()
-        .map { meta, tiff_files_list ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def tiff_files_list = tuple[1]
             [meta, tiff_files_list.flatten()]
         }
 
