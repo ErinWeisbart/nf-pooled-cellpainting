@@ -144,7 +144,12 @@ workflow POOLED_CELLPAINTING {
                 [group_key, group_meta, image]
             }
             .groupTuple(by: 0)
-            .map { group_key, meta_list, images_list ->
+            .map { tuple ->
+                // Extract grouped values from tuple
+                def group_key = tuple[0]
+                def meta_list = tuple[1]
+                def images_list = tuple[2]
+                
                 // Use first meta (they should all be identical for common fields like batch, plate, well, site)
                 def common_meta = meta_list[0]
 
