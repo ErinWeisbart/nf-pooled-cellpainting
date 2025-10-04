@@ -88,17 +88,11 @@ workflow CELLPAINTING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/painting-illumcalc.load_data.csv",
                 csvs.collect { it.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMCALC.out.versions)
@@ -199,17 +193,11 @@ workflow CELLPAINTING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/painting-illumapply.load_data.csv",
                 csvs.collect { it.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     //
@@ -325,17 +313,11 @@ workflow CELLPAINTING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/painting-segcheck.load_data.csv",
                 csvs.collect { it.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     //

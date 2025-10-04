@@ -98,17 +98,11 @@ workflow BARCODING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/barcoding-illumcalc.load_data.csv",
                 csvs.collect { csv -> csv.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     //
@@ -227,17 +221,11 @@ workflow BARCODING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/barcoding-illumapply.load_data.csv",
                 csvs.collect { it.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     //
@@ -369,17 +357,11 @@ workflow BARCODING {
         .map { meta, csvs ->
             [meta, csvs.flatten()]
         }
-        .collectFile() { meta, csvs ->
+        .collectFile(storeDir: "${outdir}/workspace/load_data_csv") { meta, csvs ->
             [
                 "${meta.batch}/${meta.plate}/barcoding-preprocess.load_data.csv",
                 csvs.collect { it.text }.join('')
             ]
-        }
-        .map { csv_file ->
-            // Store in Batch/Plate subfolder structure
-            def output_path = "${outdir}/workspace/load_data_csv/${csv_file.name}"
-            csv_file.copyTo(output_path)
-            csv_file
         }
 
     //
