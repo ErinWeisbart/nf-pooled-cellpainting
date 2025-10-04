@@ -6,6 +6,7 @@
 include { CELLPAINTING                  } from '../subworkflows/local/cellpainting'
 include { BARCODING                     } from '../subworkflows/local/barcoding'
 include { CELLPROFILER_COMBINEDANALYSIS } from '../modules/local/cellprofiler/combinedanalysis/main'
+include { REPLACE_PATHS_IN_LOADDATA     } from '../modules/local/replace_paths_in_loaddata'
 include { MULTIQC                       } from '../modules/nf-core/multiqc/main'
 
 include { paramsSummaryMap              } from 'plugin/nf-schema'
@@ -215,12 +216,24 @@ workflow POOLED_CELLPAINTING {
             file(params.callbarcodes_plugin),
         )
         ch_versions = ch_versions.mix(CELLPROFILER_COMBINEDANALYSIS.out.versions)
+        
+        // Collect all metadata from samples for path replacement
+        ch_all_metadata = ch_cropped_images
+            .map { meta, images, metadata_for_json -> metadata_for_json.image_metadata }
+            .flatten()
+            .collect()
+        
         // Merge load_data CSVs across all samples
-        CELLPROFILER_COMBINEDANALYSIS.out.load_data_csv.collectFile(
+        ch_aggregated_csv = CELLPROFILER_COMBINEDANALYSIS.out.load_data_csv.collectFile(
             name: "combined_analysis.load_data.csv",
             keepHeader: true,
             skip: 1,
-            storeDir: "${params.outdir}/workspace/load_data_csv/",
+        )
+        
+        // Replace staged paths with native S3 paths in the final aggregated CSV
+        REPLACE_PATHS_IN_LOADDATA(
+            ch_aggregated_csv,
+            ch_all_metadata
         )
     } else {
         log.info "Skipping combined analysis: Both qc_painting_passed (${params.qc_painting_passed}) and qc_barcoding_passed (${params.qc_barcoding_passed}) must be true. Review QC montages for both arms and set both parameters to true to proceed."
