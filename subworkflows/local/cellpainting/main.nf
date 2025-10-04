@@ -297,7 +297,10 @@ workflow CELLPAINTING {
             }
 
             // Create one tuple per site with all its channel images
-            images_by_site.collect { site, site_images ->
+            images_by_site.collect { entry ->
+                def site = entry.key
+                def site_images = entry.value
+
                 if (site == null) {
                     log.error("Could not parse site from painting cropped images")
                     return null
