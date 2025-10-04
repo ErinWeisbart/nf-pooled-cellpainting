@@ -289,10 +289,10 @@ workflow CELLPAINTING {
         painting_xoffset_tiles,
         painting_yoffset_tiles,
         compress,
-        painting_channame,
-        qc_painting_passed,
         first_site_index,
         phenix,
+        painting_channame,
+        qc_painting_passed,
     )
 
     // Split cropped images into individual tuples with site in metadata
