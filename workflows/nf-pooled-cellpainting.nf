@@ -29,8 +29,10 @@ workflow POOLED_CELLPAINTING {
     ch_versions = channel.empty()
     ch_multiqc_files = channel.empty()
 
-    ch_samplesheet_flat = ch_samplesheet.flatMap { meta, image ->
+    ch_samplesheet_flat = ch_samplesheet.flatMap { tuple ->
         // Split imaging channels by comma and create a separate entry for each channel
+        def meta = tuple[0]
+        def image = tuple[1]
         meta.original_channels = meta.channels
         meta.remove('original_channels')
         return [[meta, image]]
@@ -38,17 +40,23 @@ workflow POOLED_CELLPAINTING {
 
     // Add meta.arm back into each channel
     ch_samplesheet_painting = ch_samplesheet_flat
-        .filter { meta, _image ->
+        .filter { tuple ->
+            def meta = tuple[0]
             meta.arm == "painting"
         }
-        .map { meta, image ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def image = tuple[1]
             [meta + [arm: 'painting'], image]
         }
     ch_samplesheet_barcoding = ch_samplesheet_flat
-        .filter { meta, _image ->
+        .filter { tuple ->
+            def meta = tuple[0]
             meta.arm == "barcoding"
         }
-        .map { meta, image ->
+        .map { tuple ->
+            def meta = tuple[0]
+            def image = tuple[1]
             [meta + [arm: 'barcoding'], image]
         }
 
@@ -118,15 +126,27 @@ workflow POOLED_CELLPAINTING {
     if (params.qc_painting_passed && params.qc_barcoding_passed) {
         // Combine cropped images from both arms
         CELLPAINTING.out.cropped_images
-            .map { meta, images -> [meta + [arm_source: 'cellpainting'], images] }
+            .map { tuple ->
+                def meta = tuple[0]
+                def images = tuple[1]
+                [meta + [arm_source: 'cellpainting'], images]
+            }
             .mix(
-                BARCODING.out.cropped_images.map { meta, images -> [meta + [arm_source: 'barcoding'], images] }
+                BARCODING.out.cropped_images.map { tuple ->
+                    def meta = tuple[0]
+                    def images = tuple[1]
+                    [meta + [arm_source: 'barcoding'], images]
+                }
             )
-            .flatMap { meta, images ->
+            .flatMap { tuple ->
+                def meta = tuple[0]
+                def images = tuple[1]
                 // Flatten images and associate each image file with its metadata (including arm_source)
                 images.collect { img -> [meta, img] }
             }
-            .map { meta, image ->
+            .map { tuple ->
+                def meta = tuple[0]
+                def image = tuple[1]
                 // Create SIMPLE STRING grouping key for proper groupTuple operation
                 def group_key = "${meta.batch}_${meta.plate}_${meta.well}_${meta.site}"
                 def group_meta = [
