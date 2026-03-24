@@ -16,11 +16,11 @@ These scripts are automatically available in the process `PATH` and are called d
 
 ### Purpose
 
-Generates `load_data.csv` files required by CellProfiler processes. This is the **primary data staging script** used throughout the pipeline. 
+Generates `load_data.csv` files required by CellProfiler processes. This is the **primary data staging script** used throughout the pipeline.
 
 ### Usage
 
-```python
+```bash
 generate_load_data_csv.py \
     --pipeline_type <type> \
     --channels <channel_list> \
@@ -170,24 +170,21 @@ Different pipeline types produce different CSV structures:
 
 **Standard (Cell Painting)**:
 
-```csv
-Metadata_Plate,Metadata_Well,Metadata_Site,FileName_OrigDNA,Frame_OrigDNA,FileName_IllumDNA,...
-Plate1,A1,1,WellA1_Point_0000.ome.tiff,0,Plate1_IllumDNA.npy,...
-```
+|Metadata_Plate|Metadata_Well|Metadata_Site|FileName_OrigDNA          |Frame_OrigDNA|FileName_IllumDNA  |...|
+|--------------|-------------|-------------|--------------------------|-------------|-------------------|---|
+|Plate1        |A1           |1            |WellA1_Point_0000.ome.tiff|0            |Plate1_IllumDNA.npy|...|
 
 **With Cycles (Barcoding)**:
 
-```csv
-Metadata_Plate,Metadata_Well,Metadata_Site,Metadata_Cycle,FileName_Cycle01_OrigA,Frame_Cycle01_OrigA,...
-Plate1,A1,1,1,filename.ome.tiff,0,...
-```
+|Metadata_Plate|Metadata_Well|Metadata_Site|Metadata_Cycle|FileName_Cycle01_OrigA|Frame_Cycle01_OrigA|...|
+|--------------|-------------|-------------|--------------|----------------------|-------------------|---|
+|Plate1        |A1           |1            |1             |filename.ome.tiff     |0                  |...|
 
 **Combined Analysis**:
 
-```csv
-Metadata_Plate,Metadata_Site,Metadata_Well,FileName_CorrDNA,FileName_Cycle01_A,...
-Plate1,1,A1,corrected.tiff,cycle1.tiff,...
-```
+|Metadata_Plate|Metadata_Site|Metadata_Well|FileName_CorrDNA|FileName_Cycle01_A|...|
+|--------------|-------------|-------------|----------------|------------------|---|
+|Plate1        |1            |A1           |corrected.tiff  |cycle1.tiff       |...|
 
 ### Implementation Details
 
@@ -336,31 +333,3 @@ logging.basicConfig(level=logging.DEBUG)
 4. **Error messages**: Provide clear, actionable error messages
 5. **Logging**: Log key operations for debugging
 6. **Testing**: Write unit tests for parsing logic
-
-## Common Issues
-
-### Missing Images
-
-**Symptom**: CSV has fewer rows than expected
-
-**Solution**: Check filename patterns match exactly:
-
-```bash
-ls test_images/ | grep -E "P[0-9]+_[A-Z][0-9]+_[0-9]+_[0-9]+_.*\.tif"
-```
-
-### Metadata Mismatches
-
-**Symptom**: CellProfiler can't group images properly
-
-**Solution**: Ensure metadata columns are populated correctly:
-
-```python
-df[['Metadata_Plate', 'Metadata_Well', 'Metadata_Site']].drop_duplicates()
-```
-
-## Next Steps
-
-- [Architecture](architecture.md) - Understand where scripts are called
-- [CellProfiler Integration](cellprofiler.md) - How CSV files are used
-- [Testing](testing.md) - Test script integration

@@ -16,67 +16,64 @@ The main workflow (`workflows/nf-pooled-cellpainting.nf`) orchestrates the pipel
 
 Located in `subworkflows/local/cellpainting/main.nf`. The workflow is organized into three logical phases:
 
-**1. Illumination Correction**
+**Phase 1: Illumination Correction**
 
-- **ILLUMCALC**: Calculate illumination corrections per plate (outputs `.npy`).
-  > _Groups by:_ `[batch, plate]`
-- **QC_MONTAGEILLUM**: Generate illumination QC montages.
-- **ILLUMAPPLY**: Apply illumination corrections per site.
-  > _Groups by:_ `[batch, plate, well, site]`
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| ILLUMCALC | Calculate illumination corrections per plate | `[batch, plate]` |
+| QC_MONTAGEILLUM | Generate illumination QC montages | |
+| ILLUMAPPLY | Apply illumination corrections per site | `[batch, plate, well, site]` |
 
-**2. Segmentation Quality Control**
+**Phase 2: Segmentation Quality Control**
 
-- **SEGCHECK**: Segmentation quality check (subsampled by `range_skip`).
-  > _Groups by:_ `[batch, plate, well]`
-- **QC_MONTAGE_SEGCHECK**: Segmentation QC visualizations.
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| SEGCHECK | Segmentation quality check (subsampled by `range_skip`) | `[batch, plate, well]` |
+| QC_MONTAGE_SEGCHECK | Segmentation QC visualizations | |
 
-**3. Image Stitching (Conditional)**
+**Phase 3: Image Stitching (Conditional)**
 
-- **FIJI_STITCHCROP**: Stitch and crop images (enabled when `qc_painting_passed`).
-  > _Groups by:_ `[batch, plate, well]`
-- **QC_MONTAGE_STITCHCROP**: Stitching QC visualizations.
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| FIJI_STITCHCROP | Stitch and crop images (enabled when `qc_painting_passed`) | `[batch, plate, well]` |
+| QC_MONTAGE_STITCHCROP | Stitching QC visualizations | |
 
-### Barcoding Subworkflow
+#### Barcoding Subworkflow
 
-Located in `subworkflows/local/barcoding/main.nf`. The workflow is organized into three logical phases:
+Located in `subworkflows/local/barcoding/main.nf`. Organized into three logical phases:
 
-**1. Illumination Correction**
+**Phase 1: Illumination Correction**
 
-- **ILLUMCALC**: Calculate cycle-specific illumination corrections.
-  > _Groups by:_ `[batch, plate, cycle]`
-- **QC_MONTAGEILLUM**: Illumination QC montages.
-- **ILLUMAPPLY**: Apply illumination corrections.
-  > _Groups by:_ `[batch, plate, well]`
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| ILLUMCALC | Calculate cycle-specific illumination corrections | `[batch, plate, cycle]` |
+| QC_MONTAGEILLUM | Illumination QC montages | |
+| ILLUMAPPLY | Apply illumination corrections | `[batch, plate, well]` |
 
-**2. Barcode Quality Control and Preprocessing**
+**Phase 2: Barcode Quality Control and Preprocessing**
 
-- **QC_BARCODEALIGN**: Barcode alignment QC. Checks pixel shifts and correlation between cycles. Validates against `barcoding_shift_threshold` and `barcoding_corr_threshold`.
-- **PREPROCESS**: Barcode calling and preprocessing. Uses CellProfiler plugins (`callbarcodes`, `compensatecolors`).
-  > _Groups by:_ `[batch, plate, well, site]`
-- **QC_PREPROCESS**: Preprocessing QC visualizations.
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| QC_BARCODEALIGN | Barcode alignment QC (validates against thresholds) | |
+| PREPROCESS | Barcode calling and preprocessing | `[batch, plate, well, site]` |
+| QC_PREPROCESS | Preprocessing QC visualizations | |
 
-**3. Image Stitching (Conditional)**
+**Phase 3: Image Stitching (Conditional)**
 
-- **FIJI_STITCHCROP**: Stitch and crop images. Enabled when `qc_barcoding_passed == true`.
-  > _Groups by:_ `[batch, plate, well]`
+| Process | Description | Grouping |
+|---------|-------------|----------|
+| FIJI_STITCHCROP | Stitch and crop images (enabled when `qc_barcoding_passed == true`) | `[batch, plate, well]` |
 
-### Combined Analysis (Conditional)
+#### Combined Analysis (Conditional)
 
 Located in `modules/local/cellprofiler/combinedanalysis/main.nf`. Executes when both `qc_painting_passed` and `qc_barcoding_passed` are `true`.
 
-**Input Aggregation**
-
-Combines cropped images from both arms, grouped by `[batch, plate, well, site]`:
+**Inputs**: Combines cropped images from both arms, grouped by `[batch, plate, well, site]`:
 
 - **From Cell Painting**: Corrected images (`CorrDNA`, `CorrPhalloidin`, `CorrCHN2`, etc.)
 - **From Barcoding**: Preprocessed cycle images (`Cycle##_A`, `Cycle##_C`, `Cycle##_G`, `Cycle##_T`, `Cycle##_DNA`)
 
-**Processing Steps**
-
-- **CELLPROFILER_COMBINEDANALYSIS**: Runs the combined analysis CellProfiler pipeline.
-  > _Groups by:_ `[batch, plate, well, site]`
-
-**Outputs**
+**Outputs**:
 
 - Overlay images (PNG) showing segmentation results
 - CSV statistics for Nuclei, Cells, Cytoplasm, Foci measurements
@@ -153,7 +150,7 @@ ch_illumcalc_input = ch_samplesheet_cp
 
 We specifically pass along the per-image metadata to the illumination correction process to efficiently generate the load_data.csv file within the process script block. These channel rewirings will look different depending on the grouping that is desired. A concrete example of two different levels of parallelization is implemented for CELLPROFILER_ILLUMAPPLY_BARCODING, which can be parallelized at the site or well level, which is controlled by a parameter (`--barcoding_illumapply_grouping`):
 
-```
+```groovy
 // Group images for ILLUMAPPLY based on parameter setting
 // Two modes:
 //   - "site": Group by site - each site is processed separately
@@ -256,6 +253,14 @@ if (params.qc_painting_passed) {
 
 Importantly, only setting `if else` statements to control the gating behaviour is not sufficient because Nextflow uses the dataflow paradigm and will still process all sites / wells / plates even if the QC checks fail. To prevent this, we use the [when](https://github.com/broadinstitute/nf-pooled-cellpainting/blob/025098a756da05ae1948fa94a74dd9747af90a88/modules/local/fiji/stitchcrop/main.nf#L33-L34) parameter inside the `FIJI_STITCHCROP` process to control the execution of the process. This `when` parameter will only let the process be executed if the `qc_painting_passed` or `qc_barcoding_passed` parameter respectively are set to `true`.
 
+```groovy
+process FIJI_STITCHCROP {
+    when:
+    params.qc_painting_passed  // or params.qc_barcoding_passed
+    // ...
+}
+```
+
 ### Manual Review Workflow
 
 1. Run pipeline with default QC parameters (`false`)
@@ -300,8 +305,12 @@ Cellprofiler plugins are downloaded and staged by Nextflow from the Cellprofiler
 Error and retry strategies are defined in the base.config file in the `/conf` directory. The pipeline supports retrying failed processes in case of insufficient memory or other defined error codes. The specific parameters and exit codes for retry behaviour can be modified via nextflow configuration:
 [base.config](https://github.com/broadinstitute/nf-pooled-cellpainting/blob/dev/conf/base.config)
 
-## Next Steps
+```groovy
+process {
+    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'finish' }
+    maxRetries    = 1
+    maxErrors     = '-1'
+}
+```
 
-- [CellProfiler Integration](cellprofiler.md) - Deep dive into CellProfiler usage
-- [Python Scripts](python-scripts.md) - Understand data staging scripts
-- [Testing](testing.md) - Learn testing strategies
+Exit codes 130-145, 104, and 175 trigger automatic retry with increased resources.

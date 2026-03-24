@@ -2,7 +2,7 @@
 
 This document outlines the critical dependencies between the input samplesheet, the Nextflow pipeline logic, and the Python scripts that generate `load_data.csv` files for CellProfiler. Correctly formatting your samplesheet and naming your files is essential for the pipeline to function correctly.
 
-## 1. Samplesheet Requirements
+## Samplesheet Requirements
 
 The samplesheet is the single source of truth for experimental metadata. The pipeline expects specific columns to be present.
 
@@ -26,17 +26,17 @@ The samplesheet is the single source of truth for experimental metadata. The pip
     - **Illumination Calculation/Correction**: Metadata (`plate`, `channels`, `cycle`) is passed _explicitly_ to the Python script via CLI arguments.
     - **Preprocessing & Combined Analysis**: Metadata is _implicitly_ derived from filenames in some legacy paths, but the modern implementation relies on the `meta` map passed from Nextflow.
 
-
-!!! danger Single Source of Truth
-    The pipeline is designed so that metadata (Plate, Well, Site) comes from the **samplesheet**, not the filenames. However, **filenames must still follow specific patterns** so the Python script can correctly identify which file corresponds to which channel/cycle.
+:::{danger}
+The pipeline is designed so that metadata (Plate, Well, Site) comes from the **samplesheet**, not the filenames. However, **filenames must still follow specific patterns** so the Python script can correctly identify which file corresponds to which channel/cycle.
+:::
 
 ---
 
-## 2. Channel Naming Constraints
+## Channel Naming Constraints
 
 The Python script (`bin/generate_load_data_csv.py`) uses regular expressions to parse filenames and extract **Channel** and **Cycle** information. This is where most user errors occur.
 
-### A. Cell Painting Arm
+### Cell Painting Arm
 
 **Input Images (Raw)**
 
@@ -52,7 +52,7 @@ The Python script (`bin/generate_load_data_csv.py`) uses regular expressions to 
   - Here, `DNA` is extracted as the channel name.
   - **Constraint**: This extracted name MUST match one of the entries in your samplesheet `channels` column (e.g., `DNA`).
 
-### B. Barcoding Arm
+### Barcoding Arm
 
 **Input Images (Raw)**
 
@@ -67,12 +67,13 @@ The Python script (`bin/generate_load_data_csv.py`) uses regular expressions to 
   - `Cycle01` -> Cycle 1
   - `A` -> Channel A
 
-!!! warning Barcoding Channel Names
-    Ensure your samplesheet `channels` column for barcoding rows uses standard base names (`A`, `C`, `G`, `T`) or `DNA`/`DAPI`. Using non-standard names (e.g., `Cy5`, `FITC`) may cause the regex to fail or the script to misinterpret the file type.
+:::{warning}
+Ensure your samplesheet `channels` column for barcoding rows uses standard base names (`A`, `C`, `G`, `T`) or `DNA`/`DAPI`. Using non-standard names (e.g., `Cy5`, `FITC`) may cause the regex to fail or the script to misinterpret the file type.
+:::
 
 ---
 
-## 3. Combined Analysis Dependencies
+## Combined Analysis Dependencies
 
 The Combined Analysis step merges data from both arms. This is the most fragile step regarding naming.
 
@@ -105,18 +106,17 @@ If you name a Cell Painting channel `Cycle1` (e.g., `CorrCycle1.tiff`), the scri
 
 ---
 
-## 4. Summary Checklist
+## Summary Checklist
 
 Before running the pipeline:
 
-1. [ ] **Samplesheet Columns**: Ensure `batch`, `plate`, `well`, `site`, `channels`, `arm` are present.
+[ ] **Samplesheet Columns**: Ensure `batch`, `plate`, `well`, `site`, `channels`, `arm` are present.
 
-2. [ ] **Channel Names**:
+[ ] **Channel Names**:
+- Cell Painting: Names in `channels` column match the names in your raw image filenames (e.g., `DNA`, `Mito`).
 
-   - Cell Painting: Names in `channels` column match the names in your raw image filenames (e.g., `DNA`, `Mito`).
+- Barcoding: Names in `channels` column are `A`, `C`, `G`, `T`, `DNA`, or `DAPI`.
 
-   - Barcoding: Names in `channels` column are `A`, `C`, `G`, `T`, `DNA`, or `DAPI`.
+[ ] **Avoid Keywords**: Do not use `Cycle` or `Corr` as part of your raw channel names to avoid regex confusion.
 
-3. [ ] **Avoid Keywords**: Do not use `Cycle` or `Corr` as part of your raw channel names to avoid regex confusion.
-
-4. [ ] **Consistency**: Ensure `plate` names are consistent across all rows for the same physical plate.
+[ ] **Consistency**: Ensure `plate` names are consistent across all rows for the same physical plate.
