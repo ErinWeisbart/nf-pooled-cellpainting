@@ -35,7 +35,7 @@ jobs:
         run: pip install -r docs/docs-requirements.txt
 
       - name: Build documentation
-        run: cd docs && jupyter book build --html
+        run: cd docs && BASE_URL=/nf-pooled-cellpainting jupyter book build --html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
