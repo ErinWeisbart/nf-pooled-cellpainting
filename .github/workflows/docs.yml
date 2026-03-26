@@ -35,12 +35,12 @@ jobs:
         run: pip install -r docs/docs-requirements.txt
 
       - name: Build documentation
-        run: cd docs && jupyter book build --site
+        run: cd docs && jupyter book build --html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_build/site
+          path: docs/_build/html
 
   # Deployment job
   deploy:
