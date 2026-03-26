@@ -1,8 +1,3 @@
----
-kernelspec:
-  name: python3
-  display_name: 'Python'
----
 # Using Your Own Data: Setup
 
 To run the pipeline on your own data, you need to prepare a few key input files. This guide details the requirements for each.

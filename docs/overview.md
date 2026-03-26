@@ -6,7 +6,7 @@ Optical Pooled Screening (OPS) enables high-throughput functional genomics by co
 
 This pipeline integrates two complementary methodologies that together yields matched genotype-phenotype data at single-cell resolution.
 
-### Cell Painting (phenotpying)
+### Cell Painting (phenotyping)
 
 Cell Painting is a specific morphological profiling assay (or image-based phenotyping assay) that produces single-cell, quantitative phenotypic measurements. Through multiplexed fluorescent labeling of cellular compartments (canonically DNA, endoplasmic reticulum, mitochondria, actin, Golgi apparatus, nucleoli, plasma membrane, and cytoplasmic RNA), this approach generates high-dimensional feature vectors describing cellular morphology, organization, and intensity distributions.
 
@@ -16,7 +16,7 @@ In-situ Sequencing (ISS) enables spatial genotyping by decoding DNA barcodes dir
 
 ## What is nf-pooled-cellpainting?
 
-nf-pooled-cellpainting is a [NextFlow](https://www.nextflow.io) pipeline that coordinates the Pooled Cell Painting workflow.
+nf-pooled-cellpainting is a [Nextflow](https://www.nextflow.io) pipeline that coordinates the Pooled Cell Painting workflow.
 
 ## Citation
 

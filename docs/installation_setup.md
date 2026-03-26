@@ -29,7 +29,7 @@ We provide installation and run instructions for both local runs and cloud runs 
     nextflow run broadinstitute/nf-pooled-cellpainting -profile docker --help -r dev
     ```
 
-After succcesfully verifying installation, we recommend you [run the local test example](quick_start.md).
+After successfully verifying installation, we recommend you [run the local test example](quick_start.md).
 
 ## Cloud Setup of Seqera Platform
 

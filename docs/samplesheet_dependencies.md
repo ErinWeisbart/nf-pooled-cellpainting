@@ -110,13 +110,12 @@ If you name a Cell Painting channel `Cycle1` (e.g., `CorrCycle1.tiff`), the scri
 
 Before running the pipeline:
 
-[ ] **Samplesheet Columns**: Ensure `batch`, `plate`, `well`, `site`, `channels`, `arm` are present.
+- [ ] **Samplesheet Columns**: Ensure `batch`, `plate`, `well`, `site`, `channels`, `arm` are present.
 
-[ ] **Channel Names**:
-- Cell Painting: Names in `channels` column match the names in your raw image filenames (e.g., `DNA`, `Mito`).
+- [ ] **Channel Names**:
+  - Cell Painting: Names in `channels` column match the names in your raw image filenames (e.g., `DNA`, `Mito`).
+  - Barcoding: Names in `channels` column are `A`, `C`, `G`, `T`, `DNA`, or `DAPI`.
 
-- Barcoding: Names in `channels` column are `A`, `C`, `G`, `T`, `DNA`, or `DAPI`.
+- [ ] **Avoid Keywords**: Do not use `Cycle` or `Corr` as part of your raw channel names to avoid regex confusion.
 
-[ ] **Avoid Keywords**: Do not use `Cycle` or `Corr` as part of your raw channel names to avoid regex confusion.
-
-[ ] **Consistency**: Ensure `plate` names are consistent across all rows for the same physical plate.
+- [ ] **Consistency**: Ensure `plate` names are consistent across all rows for the same physical plate.

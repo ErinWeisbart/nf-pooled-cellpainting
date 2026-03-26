@@ -12,7 +12,7 @@ nextflow run broadinstitute/nf-pooled-cellpainting ... -resume
 
 This depends heavily on the size of your images and the number of tiles. Some Cellprofiler steps of the pipeline operate serially on images and therefore don't increase memory usage linearly with the number of images. Others do load multiple images into memory at once, which can be a problem for large wells. In general the pipeline has relatively low resource demands, with most processes request 1 CPU and 2 GB of memory.
 
-Memory-intensive tasks are :
+Memory-intensive tasks are:
 
 | Process | Memory Needed |
 |---------|---------------|

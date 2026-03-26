@@ -8,7 +8,6 @@ on:
     paths:
       - "docs/**"
       - "nextflow_schema.json"
-      - "docs-requirements.txt"
 
 permissions:
   contents: read
@@ -32,16 +31,16 @@ jobs:
           python-version: 3.x
 
       - name: Install dependencies
-        run: pip install -r docs-requirements.txt
+        run: pip install -r docs/docs-requirements.txt
 
       - name: Build documentation
-        run: jupyter book build --html --strict --execute 
+        run: cd docs && jupyter book build --site --strict
 
       - name: Upload artifact
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: docs/_build/site
 
   # Deployment job
   deploy:

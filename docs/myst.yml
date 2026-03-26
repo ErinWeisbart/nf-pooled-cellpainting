@@ -3,7 +3,7 @@ version: 1
 project:
   id: 20cbaad9-71c1-49fa-a216-1ef99e12df75
   title: nf-pooled-cellpainting Documentation
-  description: Documentation for the NextFlow Poole Cell Painting workflow
+  description: Documentation for the Nextflow Pooled Cell Painting workflow
   open_access: True
   license: BSD-3-Clause
   github: https://github.com/broadinstitute/nf-pooled-cellpainting
@@ -30,7 +30,8 @@ project:
         - file: architecture.md
         - file: cellprofiler.md
         - file: python_scripts.md
-        - file: testing_ci_cd.md
+        # TODO: extract testing_ci_cd.md from old reference.md
+        # - file: testing_ci_cd.md
 site:
   template: book-theme
   options:

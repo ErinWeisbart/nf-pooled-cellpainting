@@ -78,7 +78,7 @@ results/workspace/qc_reports/
 
 ![view reports](images/inspect_qc_reports.png)
 
-Select the **Reports** tab and select each of the indivudal reports to examine them.
+Select the **Reports** tab and select each of the individual reports to examine them.
 
 ## Step 3: Complete the Run (Phase 2)
 
