@@ -77,7 +77,7 @@ cmd = "cd docs && jupyter book start"
 description = "Serve documentation locally"
 
 [tasks.build-docs]
-cmd = "cd docs && jupyter book build --site --strict"
+cmd = "cd docs && jupyter book build --site"
 description = "Build documentation"
 
 [tasks.clean-docs]

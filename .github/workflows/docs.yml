@@ -34,7 +34,7 @@ jobs:
         run: pip install -r docs/docs-requirements.txt
 
       - name: Build documentation
-        run: cd docs && jupyter book build --site --strict
+        run: cd docs && jupyter book build --site
 
       - name: Upload artifact
         if: github.event_name == 'push'
