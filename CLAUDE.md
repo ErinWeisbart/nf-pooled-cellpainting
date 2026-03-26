@@ -10,7 +10,7 @@ nf-pooled-cellpainting is a Nextflow pipeline for processing optical pooled scre
 
 **Note**: The pipeline runs entirely in Docker containers (CellProfiler, Fiji, etc.). End users only need Nextflow + Docker. This section covers the **developer environment** for working on the pipeline code.
 
-This project uses [pixi](https://pixi.sh) to manage developer tools (nextflow, nf-test, nf-core, mkdocs). Install pixi, then:
+This project uses [pixi](https://pixi.sh) to manage developer tools (nextflow, nf-test, nf-core, jupyter-book). Install pixi, then:
 
 ```bash
 pixi install          # Install developer tools
@@ -46,8 +46,9 @@ pixi run clean-work      # Remove work, results, .nextflow
 pixi run clean-all-work  # Also remove .nf-test cache
 
 # Documentation
-pixi run serve-docs      # Serve docs locally
-pixi run build-docs      # Build docs
+pixi run serve-docs      # Serve docs locally (Jupyter Book at localhost:3000)
+pixi run build-docs      # Build static HTML docs (output: docs/_build/html/)
+pixi run clean-docs      # Remove docs build artifacts
 
 # List all available tasks
 pixi task list
@@ -121,6 +122,16 @@ Both must be true for combined analysis to run.
 - NullPointerException warnings from nf-test on macOS are expected (workflow.trace issue)
 - Tests must be tagged `fast` or `slow` (nf-test doesn't support negation like `!slow`)
 - New tests need `tag "fast"` or they won't run in CI fast mode
+
+## Documentation (Jupyter Book / MyST)
+
+- Docs source is in `docs/`, configured by `docs/myst.yml`
+- Build must run from inside `docs/` (where `myst.yml` lives)
+- `jupyter book build --html` produces static HTML; `--site` produces dynamic bundles (no `index.html`)
+- GitHub Pages deployment requires `BASE_URL=/nf-pooled-cellpainting` for subpath serving
+- `--strict` enables external link checking which is flaky in CI — avoid in workflows
+- First TOC entry in `myst.yml` must be a plain `file:` (no children) — MyST constraint
+- Docs CI workflow (`.github/workflows/docs.yml`) only triggers on `docs/**` path changes or `workflow_dispatch`
 
 ## Configuration
 
