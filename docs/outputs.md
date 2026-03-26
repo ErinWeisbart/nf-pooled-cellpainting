@@ -167,19 +167,19 @@ segmentation_masks/
 
 **Files**:
 
-```
-Image.csv
-Nuclei.csv
-Cells.csv
-Cytoplasm.csv
-Experiment.csv
-```
+| File | Description |
+|------|-------------|
+| `Image.csv` | Per-image measurements (counts, metadata) |
+| `Nuclei.csv` | Per-nucleus measurements (location, intensity, texture) |
+| `Cells.csv` | Per-cell measurements |
+| `Cytoplasm.csv` | Per-cytoplasm measurements |
+| `Experiment.csv` | Pipeline metadata |
 
 **Description**: CSV files containing extracted features and measurements.
 
 #### Image.csv
 
-Per-image measurements:
+Per-image measurements, including:
 
 | Column           | Description               |
 | ---------------- | ------------------------- |
@@ -192,7 +192,7 @@ Per-image measurements:
 
 #### Nuclei.csv / Cells.csv
 
-Per-object measurements:
+Per-object measurements, including:
 
 | Column                      | Description                   |
 | --------------------------- | ----------------------------- |
@@ -216,67 +216,25 @@ QC reports are numbered to reflect the pipeline execution order, making it easy 
 
 **Location**: `results/workspace/qc_reports/`
 
-### 1. Illumination Painting
-
-**Path**: `1_illumination_painting/{plate}/`
-
-**Files**: `*.png` montages
-
-**Description**: Visual summary of painting illumination correction functions.
-
-### 3. Segmentation
-
-**Path**: `3_segmentation/{plate}/`
-
-**Files**: `*.png` montages
-
-**Description**: Visual QC for segmentation quality. Shows sample sites with segmentation overlays.
-
-### 4. Stitching Painting
-
-**Path**: `4_stitching_painting/{plate}/`
-
-**Files**: `*.png` montages
-
-**Description**: Visual QC for painting stitching quality.
-
-### 5. Illumination Barcoding
-
-**Path**: `5_illumination_barcoding/{plate}/`
-
-**Files**: `*.png` montages
-
-**Description**: Visual summary of barcoding illumination correction functions.
-
-### 6. Alignment
-
-**Path**: `6_alignment/{plate}/`
-
-**Files**: `*.html`, `*.ipynb`, `*.png`
-
-**Description**: Barcode alignment QC reports showing cycle-to-cycle registration quality.
-
-### 7. Preprocessing
-
-**Path**: `7_preprocessing/{plate}/`
-
-**Files**: `*.html`, `*.ipynb`, `*.png`
-
-**Description**: Barcoding preprocessing QC reports.
-
-### 8. Stitching Barcoding
-
-**Path**: `8_stitching_barcoding/{plate}/`
-
-**Files**: `*.png` montages
-
-**Description**: Visual QC for barcoding stitching quality.
+| Directory | Description | Files |
+|-----------|-------------|-------|
+| `1_illumination_painting/` | Painting illumination correction montages | `*.png` montages |
+| `3_segmentation/` | Segmentation QC with overlays | `*.png` montages |
+| `4_stitching_painting/` | Painting stitching QC | `*.png` montages |
+| `5_illumination_barcoding/` | Barcoding illumination correction montages | `*.png` montages |
+| `6_alignment/` | Barcode alignment reports | `*.html`, `*.ipynb`, `*.png` |
+| `7_preprocessing/` | Barcoding preprocessing QC | `*.html`, `*.ipynb`, `*.png` |
+| `8_stitching_barcoding/` | Barcoding stitching QC | `*.png` montages |
 
 ## MultiQC Reports
 
 **Location**: `results/multiqc/`
 
-**Files**: `multiqc_report.html` and associated data
+**Files**:
+
+- `multiqc_report.html`: Interactive HTML report aggregating all QC metrics
+- `multiqc_data/`: Raw data and plot data
+- `multiqc_plots/`: Exported plot files
 
 **Description**: Aggregated summary of pipeline execution metrics and QC results.
 
@@ -285,6 +243,15 @@ QC reports are numbered to reflect the pipeline execution order, making it easy 
 **Location**: `results/pipeline_info/`
 
 The pipeline automatically generates execution reports and metadata in this folder.
+
+| File | Description |
+|------|-------------|
+| `execution_report_*.html` | Resource usage and task statistics |
+| `execution_timeline_*.html` | Timeline visualization of task execution |
+| `execution_trace_*.txt` | Detailed execution log with per-task metrics |
+| `pipeline_dag_*.html` | Interactive DAG visualization |
+| `params_*.json` | Parameters used for the run |
+| `nf-pooled-cellpainting_software_mqc_versions.yml` | Software versions |
 
 ### Execution Reports
 

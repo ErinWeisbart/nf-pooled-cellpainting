@@ -18,7 +18,6 @@ nf-pooled-cellpainting/
 ├── docs/                   # Documentation source
 ├── LICENSE                 # License
 ├── main.nf                 # Main pipeline
-├── mkdocs.yml              # MkDocs configuration
 ├── modules/                # nf-core modules
 ├── modules.json            # nf-core modules
 ├── nextflow_schema.json    # Nextflow schema
@@ -52,8 +51,9 @@ modules/
             └── tests/
 ```
 
-!!! warning "Docker support only"
-    The nf-pooled-cellpainting pipeline was developed to work with the Docker container engine and does not currently support conda, singularity or any other container engine!
+:::{warning}
+**Docker support only.** The nf-pooled-cellpainting pipeline was developed to work with the Docker container engine and does not currently support conda, singularity or any other container engine!
+:::
 
 ## Getting Started with Development
 
@@ -63,8 +63,8 @@ Before contributing, make sure you have:
 
 1. [**Nextflow**](https://www.nextflow.io/) (version 23.04.0 or later)
 2. [**Docker**](https://www.docker.com/) (for running the pipeline)
-   3. [**nf-test**](https://www.nf-test.com/) (for running tests) - install via: `curl -fsSL https://code.askimed.com/install/nf-test | bash`
-   4. [**Git**](https://www.docker.com/) (for version control)
+3. [**nf-test**](https://www.nf-test.com/) (for running tests) - install via: `curl -fsSL https://code.askimed.com/install/nf-test | bash`
+4. [**Git**](https://www.docker.com/) (for version control)
 
 ### Clone and Test
 
@@ -86,10 +86,3 @@ nf-test test
 2. Make your changes
 3. Run tests locally
 4. Submit a pull request
-
-## Next Steps
-
-- [Architecture](architecture.md) - Understand the pipeline structure and data flow
-- [CellProfiler Integration](cellprofiler.md) - Learn how CellProfiler processes are implemented
-- [Testing](testing.md) - Write and run tests for your changes
-- [Python Scripts](python-scripts.md) - Understand the helper scripts
