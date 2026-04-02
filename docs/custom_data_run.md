@@ -52,7 +52,7 @@ painting_segcheck_cppipe: "s3://your-bucket/pipelines/painting_segcheck.cppipe"
 barcoding_illumcalc_cppipe: "s3://your-bucket/pipelines/barcoding_illumcalc.cppipe"
 barcoding_illumapply_cppipe: "s3://your-bucket/pipelines/barcoding_illumapply.cppipe"
 barcoding_preprocess_cppipe: "s3://your-bucket/pipelines/barcoding_preprocess.cppipe"
-combinedanalysis_cppipe: "s3://your-bucket/pipelines/combinedanlaysis.cppipe"
+combinedanalysis_cppipe: "s3://your-bucket/pipelines/combinedanalysis.cppipe"
 ```
 
 :::important
