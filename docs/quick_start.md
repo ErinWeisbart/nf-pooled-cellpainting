@@ -32,11 +32,17 @@ Expected runtime: 15-20 minutes locally
 
 In Seqera Platform, on the sidebar select `Launchpad` and then click `Add Pipeline`.
 
-Set the following  variables:\
-`Name`: `test-pipeline`\
-`Pipeline to launch`: `https://github.com/broadinstitute/nf-pooled-cellpainting`\
-`Config profiles`: `test`\
-`Revision`: `main`\
+Set the following  variables:
+
+| Setting | Value |
+|---------|-------|
+| **Name** | `test-pipeline` |
+| **Pipeline to launch** | `https://github.com/broadinstitute/nf-pooled-cellpainting` |
+| **Revision** | `main` |
+| **Compute environment** | Your AWS Batch environment |
+| **Work directory** | `s3://your-bucket/prefix/to/scratch/output` |
+| **Config profiles** | `test` |
+
 Select `Add`
 
 ![launch test pipeline](images/launchpad.png)

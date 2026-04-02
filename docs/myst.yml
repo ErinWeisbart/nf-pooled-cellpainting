@@ -30,8 +30,7 @@ project:
         - file: architecture.md
         - file: cellprofiler.md
         - file: python_scripts.md
-        # TODO: extract testing_ci_cd.md from old reference.md
-        # - file: testing_ci_cd.md
+        - file: dev_testing_ci_cd.md
 site:
   template: book-theme
   options:

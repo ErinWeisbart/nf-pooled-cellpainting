@@ -29,24 +29,37 @@ Navigate to **Launchpad** → **Add Pipeline**.
 
 | Setting | Value |
 |---------|-------|
-| **Name** | `nf-pooled-cellpainting` |
+| **Name** | `nf-pooled-cellpainting` or a name describing your run |
 | **Pipeline to launch** | `https://github.com/broadinstitute/nf-pooled-cellpainting` |
-| **Revision** | `dev` (or a specific tag) |
+| **Revision** | `dev` (for latest updates), `main` (for latest versioned code), or a specific commit |
 | **Compute environment** | Your AWS Batch environment |
-| **Work directory** | `s3://your-bucket/work` |
-| **Config profiles** | `test` (for testing) or leave empty |
+| **Work directory** | `s3://your-bucket/prefix/to/scratch/output` |
+| **Config profiles** | (leave empty for a custom run) |
 
 #### Pipeline Parameters
 
-For test runs, the `test` profile provides all necessary parameters. For custom data, provide parameters as JSON or YAML:
+In the Launchpad, select "Launch" for your pipeline.
+
+In the "Run Parameters" tab, fill all of the required Input/Output options. You can manually enter each of the values in the "Input form view" or you can add the following parameters to the JSON or YAML in the "Params file view". Note that all of the other parameters have default values but **you may need to edit default values to match your dataset.**
 
 ```yaml
 input: "s3://your-bucket/samplesheet.csv"
-barcodes: "s3://your-bucket/barcodes.csv"
 outdir: "s3://your-bucket/results"
+barcodes: "s3://your-bucket/barcodes.csv"
 painting_illumcalc_cppipe: "s3://your-bucket/pipelines/painting_illumcalc.cppipe"
-# ... other cppipe parameters
+painting_illumapply_cppipe: "s3://your-bucket/pipelines/painting_illumapply.cppipe"
+painting_segcheck_cppipe: "s3://your-bucket/pipelines/painting_segcheck.cppipe"
+barcoding_illumcalc_cppipe: "s3://your-bucket/pipelines/barcoding_illumcalc.cppipe"
+barcoding_illumapply_cppipe: "s3://your-bucket/pipelines/barcoding_illumapply.cppipe"
+barcoding_preprocess_cppipe: "s3://your-bucket/pipelines/barcoding_preprocess.cppipe"
+combinedanalysis_cppipe: "s3://your-bucket/pipelines/combinedanalysis.cppipe"
 ```
+
+:::important
+Keep `qc_barcoding_passed: false` and `qc_painting_passed: false` for your first trigger of the pipeline. This will pause the pipeline after these important QC steps before the final steps are run.
+:::
+
+Select "Launch"
 
 ### Launching and Monitoring Runs
 
