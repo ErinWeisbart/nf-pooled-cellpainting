@@ -226,20 +226,23 @@ if os.path.isdir(subdir):
                         row_widths = [7, 11, 13, 15, 17, 17,
                         19, 19, 19, 19, 19, 19, 19, 17, 17,
                         15, 13, 11, 7]
-                elif imperwell == '88':
-                        row_widths = [6, 8, 10, 10, 10, 10, 10, 10, 8, 6]
                 elif imperwell == '256':
                         row_widths = [6,10,12,14,16,16,18,18,18,18,18,18,16,16,14,12,10,6]
+                elif imperwell == '88':
+                        row_widths = [6, 8, 10, 10, 10, 10, 10, 10, 8, 6]
+                elif imperwell == '80':
+                        row_widths = [4,8,8,10,10,10,10,8,8,4]
                 elif imperwell == '52':
                         row_widths = [4,6,8,8,8,8,6,4]
                 elif imperwell == '56':
                         row_widths = [2, 6, 8, 8, 8, 8, 8, 6, 2]
                 elif imperwell == '45':
                         row_widths = [5,7,7,7,7,7,5]
+                elif imperwell == '21':
+                        row_widths = [3,5,5,5,3]
                 else:
                         print(imperwell, "images/well for a round well is not currently supported")
                         sys.exit()
-
                 rows = str(len(row_widths))
                 columns = str(max(row_widths))
 

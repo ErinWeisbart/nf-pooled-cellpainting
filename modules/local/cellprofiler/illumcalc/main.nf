@@ -9,7 +9,7 @@ process CELLPROFILER_ILLUMCALC {
         : 'community.wave.seqera.io/library/cellprofiler:4.2.8--aff0a99749304a7f'}"
 
     input:
-    tuple val(meta), val(channels), val(cycle), path(images, stageAs: "images/"), val(image_metas)
+    tuple val(meta), val(channels), val(cycle), path(images, stageAs: "images*/*"), val(image_metas)
     path illumination_cppipe
     val has_cycles
 
@@ -31,12 +31,23 @@ process CELLPROFILER_ILLUMCALC {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
+    # Build a JSON map of {basename: staged_relative_path} from images*/ subdirs
+    # so generate_load_data_csv.py can write the correct path (e.g. images11/file.tiff)
+    python3 -c "
+import json, os, glob
+mapping = {}
+for f in glob.glob('images*/*'):
+    mapping[os.path.basename(f)] = f
+print(json.dumps(mapping))
+" > staged_paths.json
+
     # Generate load_data.csv
     generate_load_data_csv.py \\
         --pipeline-type illumcalc \\
-        --images-dir ./images \\
+        --images-dir . \\
         --output load_data.csv \\
         --metadata-json metadata.json \\
+        --staged-paths-json staged_paths.json \\
         --channels "${channels}" \\
         --cycle-metadata-name "${params.cycle_metadata_name}" \\
         ${has_cycles ? '--has-cycles' : ''}
@@ -95,7 +106,7 @@ process CELLPROFILER_ILLUMCALC {
         -p illumination.cppipe \\
         -o . \\
         --data-file=load_data.csv \\
-        --image-directory ./images/
+        --image-directory .
 
     cat <<-END_VERSIONS > versions.yml
 	"${task.process}":

@@ -29,6 +29,18 @@ process CELLPROFILER_ILLUMAPPLY {
     # Create metadata JSON file from base64 (reduces log verbosity)
     echo '${metadata_base64}' | base64 -d > metadata.json
 
+    # Build a JSON map of {basename: path-relative-to-images/} from images/img?/ subdirs
+    # CellProfiler uses --image-directory ./images/ so paths in load_data.csv must be
+    # relative to that directory (e.g. img1/file.tiff, not images/img1/file.tiff)
+    python3 -c "
+import json, os, glob
+mapping = {}
+for f in glob.glob('images/img*/*'):
+    # strip the leading 'images/' prefix so CellProfiler resolves correctly
+    mapping[os.path.basename(f)] = os.path.relpath(f, 'images')
+print(json.dumps(mapping))
+" > staged_paths.json
+
     # Generate load_data.csv
     generate_load_data_csv.py \\
         --pipeline-type illumapply \\
@@ -36,6 +48,7 @@ process CELLPROFILER_ILLUMAPPLY {
         --illum-dir ./images \\
         --output load_data.csv \\
         --metadata-json metadata.json \\
+        --staged-paths-json staged_paths.json \\
         --channels "${channels}" \\
         --cycle-metadata-name "${params.cycle_metadata_name}" \\
         ${has_cycles ? '--has-cycles' : ''}
