@@ -8,6 +8,7 @@ testing*
 *.pyc
 null/
 .claude/
+CLAUDE.md
 .nf-test.log
 .nf-test/
 .lineage
@@ -23,3 +24,13 @@ resources
 .nf-test-*.nf
 .pixi/
 .venv/
+
+# runtime artifacts
+run_output.log
+run_params.json
+*.bak
+
+# runtime artifacts
+run_output.log
+run_params.json
+*.bak

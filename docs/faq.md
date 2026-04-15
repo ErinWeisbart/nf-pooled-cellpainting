@@ -10,14 +10,15 @@ nextflow run broadinstitute/nf-pooled-cellpainting ... -resume
 
 ## How much memory and cpu do I need?
 
-This depends heavily on the size of your images and the number of tiles. Some Cellprofiler steps of the pipeline operate serially on images and therefore don't increase memory usage linearly with the number of images. Others do load multiple images into memory at once, which can be a problem for large wells. In general the pipeline has relatively low resource demands, with most processes request 1 cpu and 2 GB of memory.
+This depends heavily on the size of your images and the number of tiles. Some Cellprofiler steps of the pipeline operate serially on images and therefore don't increase memory usage linearly with the number of images. Others do load multiple images into memory at once, which can be a problem for large wells. In general the pipeline has relatively low resource demands, with most processes request 1 CPU and 2 GB of memory.
 
-The most compute and memory intensive tasks are:
+Memory-intensive tasks are:
 
-- CELLPROFILER_ILLUMAPPLY_BARCODING
-- CELLPROFILER_PREPROCESS
-- FIJI_STITCHCROP
-- CELLPROFILER_COMBINEDANALYSIS
+| Process | Memory Needed |
+|---------|---------------|
+| FIJI_STITCHCROP | 36+ GB |
+| CELLPROFILER_PREPROCESS | 8 GB |
+| CELLPROFILER_COMBINEDANALYSIS | 32+ GB |
 
 All of these processes require increased amounts of memory, with COMBINEDANALYSIS needing the most. In our tests with cpg0032, CELLPROFILER_COMBINEDANALYSIS needed 32GB of RAM provisioned to not fail. If you encounter exit codes 137 (`OutOfMemoryError`) frequently and task get resubmitted with more memory, try increasing the memory for the specific process in a custom config file. Here is an example for the stitching process. Include this snippet into your Nextflow config (either on Seqera Platform, a local config file or even in your repository config if you want it applied to all pipeline runs). Be aware that increasing resource configuration for your pipeline on AWS will generally lead to provisioning of larger and more expensive EC2 instances!
 
@@ -33,17 +34,19 @@ process {
 
 The runtime depends on the number of images and the number of tiles. It's difficult to give specific numbers as this is dataset specific, but here are some numbers for datasets we have tested:
 
-- `-profile test`: This small test dataset takes around 5-10 minutes to run end-to-end.
-- `-profile test_full`: This dataset consists of 1 well with multiple sites. Expect several hours for this run to succeed.
-- `-profile test_cpg0032`: This larger dataset consists of 2 full wells and 12 cycles of barcoding. Expect several hours (9-10) and substantial resource usage for a complete run.
+| Profile | Description | Runtime |
+|---------|-------------|---------|
+| `test` | Minimal dataset | 5-10 minutes |
+| `test_full` | 1 well, multiple sites | Several hours |
+| `test_cpg0032` | 2 wells, 12 cycles | 9-10 hours |
 
 ## My images are not being found. Why?
 
-Check your `samplesheet.csv`. The `path` column must be an **absolute path** or a valid URI to cloud storage. Relative paths often cause issues, especially when running with Docker or Singularity where volume mounts might differ.
+Check your `samplesheet.csv`. The `path` column must be an **absolute path** or a valid URI to cloud storage. Relative paths often cause issues, especially when running with Docker or Singularity where volume mounts might differ. Paths must be:
 
-## Can I run the pipeline with only Cell Painting data?
-
-Yes! The pipeline is designed to be modular. If you only provide Cell Painting entries in your samplesheet, the Barcoding arm will simply not run. However, the final "Combined Analysis" step which links barcodes to cells will obviously not happen.
+- Absolute paths (not relative)
+- Valid S3 URIs for cloud execution
+- Accessible from the execution environment
 
 ## The pipeline stops after QC. Is it broken?
 
@@ -53,9 +56,9 @@ No, this is a feature, not a bug! The pipeline is designed to stop after generat
 --qc_painting_passed --qc_barcoding_passed
 ```
 
-## I see "command not found" errors.
+## I see "command not found" errors
 
-Ensure you are using the docker profile if running locally `-profile docker`. On AWS docker is the default container engine and you don't need to specify the docker profile explicitly.
+Ensure you are using the docker profile if running locally `-profile docker`. On AWS, Docker is the default container engine and you don't need to specify the docker profile explicitly.
 
 ## I get "Missing output file(s) expected by process"
 
@@ -68,7 +71,7 @@ Caused by:
 
 This means the process ran (exit code 0) but didn't produce the files Nextflow expected. Unlike a crash, the tool finished without error but simply didn't create any output. Common causes:
 
-- **Tool-specific problems**: The underlying tool (CellProfiler, FIJI, etc.) ran but had nothing to process or encountered a silent failure. In cellprofiler this is sometimes caused when images are flagged. Check the `.command.log` file in the task work directory for warnings.
+- **Tool-specific problems**: The underlying tool (CellProfiler, FIJI, etc.) ran but had nothing to process or encountered a silent failure. In CellProfiler this is sometimes caused when images are flagged. Check the `.command.log` file in the task work directory for warnings.
 
 To debug, navigate to the failed task's work directory (shown in the error) and inspect:
 
@@ -90,4 +93,4 @@ Yes. Simply omit the other arm from your samplesheet. If you only include painti
 
 ## Where can I find example CellProfiler pipelines?
 
-The test profile and cpg0032 profile both include working example pipelines. You can find these cppipe files in the `/assets/` subfolders `/cellprofiler` and `cpg0032_test_cppipes` respectively.
+The `test` profile and `cpg0032` profile both include working example pipelines. You can find these cppipe files in the `/assets/` subfolders `/cellprofiler` and `cpg0032_test_cppipes` respectively.

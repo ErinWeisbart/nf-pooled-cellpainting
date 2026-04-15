@@ -914,4 +914,3 @@ for eachlogfile in [
     "TileConfiguration.registered_copy.txt",
 ]:
     os.rename(os.path.join(subdir, eachlogfile), os.path.join(out_subdir, eachlogfile))
-

@@ -9,7 +9,7 @@ process CELLPROFILER_PREPROCESS {
     input:
     tuple val(meta), path(aligned_images, stageAs: "images/"), val(image_metas)
     path preprocess_cppipe
-    path barcodes, stageAs: "images/Barcodes.csv"
+    path barcodes, stageAs: "images/barcode_list.csv"
     path plugins, stageAs: "plugins/"
 
     output:

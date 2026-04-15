@@ -1,4 +1,4 @@
-# Using Your Own Dataset
+# Using Your Own Data: Setup
 
 To run the pipeline on your own data, you need to prepare a few key input files. This guide details the requirements for each.
 
@@ -30,18 +30,17 @@ The samplesheet is a CSV file that maps your image files to their experimental m
 
 Here's a minimal example showing one Cell Painting image and two barcoding cycles:
 
-```csv
-path,arm,batch,plate,well,channels,site,cycle,n_frames
-"/data/painting/WellA1_PointA1_0000_ChannelPhalloidin,CHN2,DNA_Seq0000.ome.tiff",painting,Batch1,Plate1,A1,"Phalloidin,CHN2,DNA",1,1,3
-"/data/barcoding/WellA1_PointA1_0000_ChannelC,A,T,G,DNA_Seq0000.ome.tiff",barcoding,Batch1,Plate1,A1,"C,A,T,G,DNA",1,1,5
-"/data/barcoding/WellA1_PointA1_0000_ChannelC,A,T,G,DNA_Seq0001.ome.tiff",barcoding,Batch1,Plate1,A1,"C,A,T,G,DNA",1,2,5
-```
+|path|arm|batch|plate|well                 |channels       |site|cycle  |n_frames|
+|----|---|-----|-----|---------------------|---------------|----|-------|--------|
+|/data/painting/WellA1_PointA1_0000_ChannelPhalloidin,CHN2,DNA_Seq0000.ome.tiff|painting|Batch1|Plate1|A1                   |Phalloidin,CHN2,DNA|1   |1      |3       |
+|/data/barcoding/WellA1_PointA1_0000_ChannelC,A,T,G,DNA_Seq0000.ome.tiff|barcoding|Batch1|Plate1|A1                   |C,A,T,G,DNA    |1   |1      |5       |
+|/data/barcoding/WellA1_PointA1_0000_ChannelC,A,T,G,DNA_Seq0001.ome.tiff|barcoding|Batch1|Plate1|A1                   |C,A,T,G,DNA    |1   |2      |5       |
 
 A more complete samplesheet with multiple wells and sites would have many more rows, one per image file.
 
-
-!!! warning "Channel Names"
-    Ensure the channel names in the `channels` column match the names used in your CellProfiler pipelines as the channel names will be used to build load_data.csv columns that need to correspond to your cppipe files provided to the pipeline!
+```{warning}
+**Ensure the channel names in the **`channels` **column match the names used in your CellProfiler pipelines** as the channel names will be used to build load_data.csv columns that need to correspond to your cppipe files provided to the pipeline!
+```
 
 ## 2. Barcodes File
 
@@ -49,17 +48,16 @@ This CSV file defines the known barcodes in your library. It is used to map the 
 
 ### Format
 
-- **Columns**: `barcode_id`, `sequence`
-- **Sequence**: The nucleotide sequence of the barcode (A, C, G, T).
+- **Columns**: `barcode_id`, `sequence` (Whatever you name the columns, they must match what column names are set in CellProfiler's CallBarcodes module.)
+- **Sequence**: The nucleotide sequence of the barcode. Can be the full barcode length no matter how many cycles you are reading. CellProfiler's CallBarcodes module will start matches at the beginning of the barcode.
 
 ### Example
 
-```csv
-barcode_id,sequence
-id1,TAAATAGTAGGATTTACACG
-id2,TAGGTGATATCAATCGATAC
-id3,ATAGCTGATTCCATTCGCTA
-```
+|barcode_id|sequence|
+|----------|--------|
+|id1       |TAAATAGTAGGATTTACACG|
+|id2       |TAGGTGATATCAATCGATAC|
+|id3       |ATAGCTGATTCCATTCGCTA|
 
 ## 3. CellProfiler Pipelines (`.cppipe`)
 
@@ -83,26 +81,10 @@ You need to provide paths to these files using the corresponding parameters:
 
 - `--combinedanalysis_cppipe`: The final step that merges data. **Crucially**, this pipeline must expect the input object tables from the previous steps.
 
-!!! warning "Pipeline Compatibility"
-    Ensure your CellProfiler pipelines are compatible with the version of CellProfiler used in the container (currently 4.2.x).
+:::{warning}
+Ensure your CellProfiler pipelines are compatible with the version of CellProfiler used in the container (currently 4.2.x).
+:::
 
-## Running the Pipeline
+## Full Parameters
 
-Once your inputs are ready, run the pipeline pointing to your files:
-
-```bash
-nextflow run broadinstitute/nf-pooled-cellpainting \
-    --input samplesheet.csv \
-    --barcodes barcodes.csv \
-    --outdir results \
-    --painting_illumcalc_cppipe your_painting_illumcalc_cppipe.cppipe \
-    --painting_illumapply_cppipe your_painting_illumapply_cppipe.cppipe \
-    --painting_segcheck_cppipe your_painting_segcheck_cppipe.cppipe \
-    --barcoding_illumcalc_cppipe your_barcoding_illumcalc_cppipe.cppipe \
-    --barcoding_illumapply_cppipe your_barcoding_illumapply_cppipe.cppipe \
-    --barcoding_preprocess_cppipe your_barcoding_preprocess_cppipe.cppipe \
-    --combinedanalysis_cppipe your_combinedanalysis_cppipe.cppipe \
-    -profile docker
-```
-
-See the [Parameters Guide](parameters.md) for a full list of configuration options.
+Full parameters can be read from nextflow_schema.json.
