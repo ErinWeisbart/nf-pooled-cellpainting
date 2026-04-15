@@ -74,6 +74,8 @@ workflow POOLED_CELLPAINTING {
         params.painting_xoffset_tiles,
         params.painting_yoffset_tiles,
         params.compress,
+        params.first_site_index,
+        params.phenix,
         params.painting_channame,
         params.qc_painting_passed,
     )
@@ -108,6 +110,8 @@ workflow POOLED_CELLPAINTING {
         params.barcoding_xoffset_tiles,
         params.barcoding_yoffset_tiles,
         params.compress,
+        params.first_site_index,
+        params.phenix,
         params.barcoding_channame,
         params.qc_barcoding_passed,
     )

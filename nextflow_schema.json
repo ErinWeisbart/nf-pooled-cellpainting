@@ -284,6 +284,16 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Whether to compress output files."
+                },
+                "first_site_index": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "Index of the first site to process."
+                },
+                "phenix": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the stitch/crop uses Phenix-style acquisition of first site centered in well, then snake"
                 }
             },
             "fa_icon": "fas fa-cog"

@@ -74,6 +74,12 @@ input:
   - compress:
       type: boolean
       description: Whether to compress output images
+  - first_site_index:
+      type: integer
+      description: Index of the first site to process
+  - phenix:
+      type: boolean
+      description: Whether the stitch/crop uses Phenix-style acquisition of first site centered in well, then snake
   - should_run:
       type: boolean
       description: Whether to run the stitching process

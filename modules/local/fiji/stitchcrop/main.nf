@@ -20,6 +20,8 @@ process FIJI_STITCHCROP {
     val xoffset_tiles
     val yoffset_tiles
     val compress
+    val first_site_index
+    val phenix
     val channame
     val should_run
 
