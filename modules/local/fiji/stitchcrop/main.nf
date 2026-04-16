@@ -69,6 +69,7 @@ process FIJI_STITCHCROP {
     export COMPRESS="${compress}"
     export CHANNAME="${channame}"
     export FIRST_SITE_INDEX="${first_site_index}"
+    export PHENIX="${phenix}"
 
     # Run Fiji in headless mode
     /opt/fiji/Fiji.app/ImageJ-linux64 \\
