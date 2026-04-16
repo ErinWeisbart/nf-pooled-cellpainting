@@ -26,7 +26,7 @@ xoffset_tiles = os.getenv("XOFFSET_TILES", "0")
 yoffset_tiles = os.getenv("YOFFSET_TILES", "0")
 compress = os.getenv("COMPRESS", "True")
 first_site_index = os.getenv("FIRST_SITE_INDEX", "0")
-phenix = os.getev("PHENIX","False")
+phenix = os.getenv("PHENIX","False")
 
 from ij import IJ, WindowManager
 import os
