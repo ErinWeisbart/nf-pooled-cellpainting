@@ -21,9 +21,14 @@ process QC_DUP_CHECK {
     mkdir -p csv_input
     
     # Copy all CSV files that end with Image.csv to the input directory
+    # Use a counter to ensure unique filenames and avoid name collisions
+    counter=0
     for file in ${csv_files}; do
         if [[ "\$file" == *Image.csv ]]; then
-            cp "\$file" csv_input/
+            # Create unique filename: counter_originalname
+            basename=\$(basename "\$file")
+            cp "\$file" "csv_input/\${counter}_\${basename}"
+            counter=\$((counter + 1))
         fi
     done
 
