@@ -2,7 +2,7 @@ process QC_DUP_CHECK {
     tag "${mode}"
     label 'qc'
 
-    container 'community.wave.seqera.io/library/pandas_pruned:86c2d07ac01c75d0'
+    container 'community.wave.seqera.io/library/ipykernel_jupytext_nbconvert_pandas_pruned:c397cee54f4ab064'
 
     input:
     val mode
