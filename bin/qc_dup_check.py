@@ -45,12 +45,13 @@ def find_image_csv_files(input_dir: str, mode: str) -> list:
     return sorted(csv_files)
 
 
-def check_correlation_columns(csv_file: Path, threshold: float = 0.99) -> dict:
+def check_correlation_columns(csv_file: Path, mode: str, threshold: float = 0.99) -> dict:
     """
     Check correlation columns in a CSV file for high values.
 
     Args:
         csv_file: Path to the CSV file
+        mode: Either 'illumapply' or 'preprocess' to determine how to filter columns
         threshold: Threshold above which correlations are considered high (default: 0.99)
 
     Returns:
@@ -69,6 +70,10 @@ def check_correlation_columns(csv_file: Path, threshold: float = 0.99) -> dict:
 
     # Find all columns with "Correlation_Correlation" in the name
     corr_columns = [col for col in df.columns if "Correlation_Correlation" in col]
+    # 6_BC_ApplyIllum measures colocalization twice, we want to report on only the original barcode channel columns not the post-alignment DAPI/DNA channel columns
+    # The post-alignment DAPI/DNA channel are checked in qc_barcodealign
+    if mode == "illumapply":
+        corr_columns = [col for col in corr_columns if "Orig" in col]
 
     if not corr_columns:
         return {
@@ -212,7 +217,7 @@ def main():
     results = []
     for csv_file in csv_files:
         print(f"Analyzing: {csv_file}")
-        result = check_correlation_columns(csv_file, args.threshold)
+        result = check_correlation_columns(csv_file, args.mode, args.threshold)
         results.append(result)
 
         if result.get("error"):
