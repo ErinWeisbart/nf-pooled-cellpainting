@@ -252,11 +252,20 @@ workflow BARCODING {
             [qc_meta, unique_wells, csv_files, num_cycles]
         }
 
+    QC_BARCODEALIGN(
+        ch_qc_barcode_input,
+        file("${projectDir}/bin/qc_barcode_align.py"),
+        barcoding_shift_threshold,
+        barcoding_corr_threshold,
+        acquisition_geometry_rows,
+        acquisition_geometry_columns,
+    )
+    ch_versions = ch_versions.mix(QC_BARCODEALIGN.out.versions)
+
     //
     // 6 QC (DUP CHECK) - ILLUMINATION CORRECTION APPLICATION DUPLICATION CHECK QC
     //
 
-    // QC: Duplication Check (ILLUMAPPLY) - per plate
     // Use the same CSV files that go to QC_BARCODEALIGN
     ch_illumapply_dup_check = ch_qc_barcode_input
         .map { qc_meta, _wells, csv_files, _num_cycles ->
@@ -267,16 +276,6 @@ workflow BARCODING {
         ch_illumapply_dup_check
     )
     ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
-
-    QC_BARCODEALIGN(
-        ch_qc_barcode_input,
-        file("${projectDir}/bin/qc_barcode_align.py"),
-        barcoding_shift_threshold,
-        barcoding_corr_threshold,
-        acquisition_geometry_rows,
-        acquisition_geometry_columns,
-    )
-    ch_versions = ch_versions.mix(QC_BARCODEALIGN.out.versions)
 
     //
     // 7 - BARCODE PREPROCESSING
@@ -338,7 +337,7 @@ workflow BARCODING {
     )
 
     //
-    // 7 QC (BARCODE CALLS) - BARCODE PREPROCESSING BARCODE CALLSQC
+    // 7 QC (BARCODE CALLS) - BARCODE PREPROCESSING BARCODE CALLS QC
     //
 
     // Group preprocessing stats by plate and collect wells
@@ -366,22 +365,6 @@ workflow BARCODING {
             [qc_meta, unique_wells, foci_csvs, image_csvs, num_cycles]
         }
 
-    //
-    // 7 QC (DUP CHECK) - BARCODE PREPROCESSING DUPLICATION CHECK QC
-    //
-
-    //// QC: Duplication Check (PREPROCESS) - per plate ////
-    ch_preprocess_dup_check = ch_preprocess_qc_input
-        .map { qc_meta, _wells, _foci_csvs, image_csvs, _num_cycles ->
-            def meta_with_mode = qc_meta + [mode: 'preprocess']
-            [meta_with_mode, image_csvs]
-        }
-    
-    QC_PREPROCESS_DUP_CHECK(
-        ch_preprocess_dup_check
-    )
-    ch_versions = ch_versions.mix(QC_PREPROCESS_DUP_CHECK.out.versions)
-
     QC_PREPROCESS(
         ch_preprocess_qc_input.map { qc_meta, wells, foci_csvs, _image_csvs, num_cycles ->
             [qc_meta, wells, foci_csvs, num_cycles]
@@ -392,6 +375,22 @@ workflow BARCODING {
         acquisition_geometry_columns,
     )
     ch_versions = ch_versions.mix(QC_PREPROCESS.out.versions)
+
+    //
+    // 7 QC (DUP CHECK) - BARCODE PREPROCESSING DUPLICATION CHECK QC
+    //
+
+    //// QC: Duplication Check (PREPROCESS) - per plate ////
+    //ch_preprocess_dup_check = ch_preprocess_qc_input
+    //    .map { qc_meta, _wells, _foci_csvs, image_csvs, _num_cycles ->
+    //        def meta_with_mode = qc_meta + [mode: 'preprocess']
+    //        [meta_with_mode, image_csvs]
+    //    }
+    
+    //QC_PREPROCESS_DUP_CHECK(
+    //    ch_preprocess_dup_check
+    //)
+    //ch_versions = ch_versions.mix(QC_PREPROCESS_DUP_CHECK.out.versions)
 
     //
     // 8 - STITCH AND CROP
