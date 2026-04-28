@@ -2,16 +2,22 @@ reports:
   multiqc/multiqc_report.html:
     display: "MultiQC report with pipeline versions and workflow summary."
   workspace/qc_reports/1_illumination_painting/**/*.png:
-    display: "Painting illumination correction montage."
+    display: "Painting: illumination correction montage"
+  workspace/qc_reports/2_illumination_comparison/**/*.png:
+    display: "Painting: compare pre- and post-illumination correction"
   workspace/qc_reports/3_segmentation/**/*.png:
-    display: "Cell painting segmentation montage."
+    display: "Painting: segmentation montage"
   workspace/qc_reports/4_stitching_painting/**/*.png:
-    display: "Painting crop and stitching montage."
+    display: "Painting: stitch/crop montage"
   workspace/qc_reports/5_illumination_barcoding/**/*.png:
-    display: "Barcoding illumination correction montage."
+    display: "Barcoding: illumination correction montage"
   workspace/qc_reports/6_alignment/**/*qc_barcode_align.html:
-    display: "Barcoding alignment QC report."
+    display: "Barcoding: alignment QC report"
+  workspace/qc_reports/6_illumapply_duplication/*.txt:
+    display: "Barcoding: check for image duplication in illumapply"
   workspace/qc_reports/7_preprocessing/**/*qc_barcode_preprocess.html:
-    display: "Barcoding preprocessing QC report."
+    display: "Barcoding: preprocessing QC report"
   workspace/qc_reports/8_stitching_barcoding/**/*.png:
-    display: "Barcoding crop and stitching montage."
+    display: "Barcoding: stitch/crop montage"
+  workspace/qc_reports/8_preprocess_duplication/**/*.txt:
+    display: "Barcoding: check for image duplication in preprocessing"
