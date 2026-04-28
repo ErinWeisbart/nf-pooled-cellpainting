@@ -339,6 +339,16 @@ print(
     ).mean()
 )
 
+print("% Reads with >4 repeat X calls")
+print(100*len([x for x in readlist if 'XXXXX' in x])/len(readlist))
+
+print("% Reads that are all unassigned (X) calls")
+len(100*len([x for x in readlist if set(x)=={'X'}])/len(readlist))
+
+print("% Reads with unassigned (X) nucleotide calls")
+print(100*len([x for x in readlist if 'X' in x])/len(readlist))
+
+
 # %%
 # Pos df
 # Creates x, y coordinates for plotting per-plate views.
@@ -474,6 +484,13 @@ for cycle in range(1, numcycles + 1):
             "Frequency": float(BarcodeCat.count("T")) / float(len(BarcodeCat)),
         }
     )
+    dflist.append(
+        {
+            "Cycle": int(cycle),
+            "Nucleotide": "X",
+            "Frequency": float(BarcodeCat.count("X")) / float(len(BarcodeCat)),
+        }
+    )
 df_parsed = pd.DataFrame(dflist)
 g = sns.lineplot(x="Cycle", y="Frequency", hue="Nucleotide", data=df_parsed)
 g.set_ylim([0.1, 0.5])
@@ -484,6 +501,18 @@ plt.title("Observed Nucleotide Frequency by Cycle")
 plt.tight_layout()
 plt.savefig(
     Path(output_dir) / "observed_nucleotide_frequency.png", dpi=150, bbox_inches="tight"
+)
+plt.show()
+
+# %%
+g = sns.lineplot(x="Cycle", y="Frequency", hue="Nucleotide", data=df_parsed)
+handles, labels = g.get_legend_handles_labels()
+g.legend(handles=handles[0:], labels=labels[0:])
+g.set_xticks(list(range(1, numcycles + 1)))
+plt.title("Observed Nucleotide Frequency by Cycle")
+plt.tight_layout()
+plt.savefig(
+    Path(output_dir) / "observed_nucleotide_frequency_noYlim.png", dpi=150, bbox_inches="tight"
 )
 plt.show()
 
