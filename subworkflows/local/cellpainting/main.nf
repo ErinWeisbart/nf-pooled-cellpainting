@@ -43,7 +43,9 @@ workflow CELLPAINTING {
     ch_versions = channel.empty()
     ch_cropped_images = channel.empty()
 
-    //// Calculate illumination correction profiles ////
+    //
+    // 1 - ILLUMINATION CORRECTION CALCULATION
+    //
 
     // Group images by batch and plate for illumination calculation
     // Keep metadata for each image to generate load_data.csv
@@ -86,7 +88,10 @@ workflow CELLPAINTING {
 
     ch_versions = ch_versions.mix(CELLPROFILER_ILLUMCALC.out.versions)
 
-    //// QC illumination correction profiles ////
+    //
+    // 1 QC - ILLUMINATION CORRECTION CALCULATION QC
+    //
+
     ch_illumination_corrections_qc = CELLPROFILER_ILLUMCALC.out.illumination_corrections
         .map { meta, npy_files ->
             def npy_meta = meta.subMap(['batch', 'plate']) + [arm: "painting"]
@@ -102,6 +107,10 @@ workflow CELLPAINTING {
         ".*\\.npy\$",
     )
     ch_versions = ch_versions.mix(QC_MONTAGEILLUM_PAINTING.out.versions)
+
+    //
+    // 2 - ILLUMINATION CORRECTION APPLICATION
+    //
 
     // Group images by site for ILLUMAPPLY
     // Each site should get all its images
@@ -173,7 +182,11 @@ workflow CELLPAINTING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
-    //// QC: Compare raw vs corrected images for first plate/well/site ////
+    //
+    // 2 QC - ILLUMINATION CORRECTION APPLICATION INPUT/OUTPUT QC
+    //
+
+    //// QC: Compare raw vs corrected images for first plate/well/site
     // Select the first site from raw images
     ch_first_raw_site = ch_images_by_site
         .map { site_meta, channels, cycles, images, image_metas ->
@@ -231,6 +244,10 @@ workflow CELLPAINTING {
     QC_ILLUMCOMPARE(ch_illum_qc_input)
     ch_versions = ch_versions.mix(QC_ILLUMCOMPARE.out.versions)
 
+    //
+    // 3 - SEGMENTATION CHECK
+    //
+
     // Reshape CELLPROFILER_ILLUMAPPLY_PAINTING output for SEGCHECK
     // Group by well (not site) so range_skip can select every nth image from the well
     ch_sub_corr_images = CELLPROFILER_ILLUMAPPLY_PAINTING.out.corrected_images
@@ -276,6 +293,10 @@ workflow CELLPAINTING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
+    //
+    // 3 QC - SEGMENTATION CHECK MONTAGE QC
+    //
+
     // Reshape CELLPROFILER_SEGCHECK output for QC montage (per-well)
     ch_segcheck_qc = CELLPROFILER_SEGCHECK.out.segcheck_res
         .map { meta, _csv_files, png_files ->
@@ -289,7 +310,10 @@ workflow CELLPAINTING {
     )
     ch_versions = ch_versions.mix(QC_MONTAGE_SEGCHECK.out.versions)
 
-    // STITCH & CROP IMAGES ////
+    //
+    // 4 - STITCH & CROP IMAGES
+    //
+
     // Conditional execution: only run if qc_painting_passed is true
     // This allows the painting arm to stop at stitching/cropping if QC fails,
     // while allowing the barcoding arm to proceed independently
@@ -381,6 +405,10 @@ workflow CELLPAINTING {
         .filter { item -> item != null }
 
     ch_versions = ch_versions.mix(FIJI_STITCHCROP.out.versions)
+
+    //
+    // 4 QC - STITCH & CROP MONTAGE QC
+    //
 
     // QC montage for stitchcrop results
     ch_stitchcrop_qc = FIJI_STITCHCROP.out.downsampled_images

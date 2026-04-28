@@ -52,6 +52,10 @@ workflow BARCODING {
     ch_versions = channel.empty()
     ch_cropped_images = channel.empty()
 
+    //
+    // 5 - ILLUMINATION CORRECTION CALCULATION
+    //
+
     // Group images by batch, plate, and cycle for illumination calculation
     // All channels for a given cycle are processed together
     ch_illumcalc_input = ch_samplesheet_sbs
@@ -91,6 +95,10 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
+    //
+    // 5 QC - ILLUMINATION CORRECTION CALCULATION QC
+    //
+
     //// QC illumination correction profiles ////
     ch_illumination_corrections_qc = CELLPROFILER_ILLUMCALC.out.illumination_corrections
         .map { meta, npy_files ->
@@ -106,6 +114,10 @@ workflow BARCODING {
         ".*Cycle.*\\.npy\$",
     )
     ch_versions = ch_versions.mix(QC_MONTAGEILLUM_BARCODING.out.versions)
+
+    //
+    // 6 - ILLUMINATION CORRECTION APPLICATION
+    //
 
     // Group images for ILLUMAPPLY based on parameter setting
     // Two modes:
@@ -197,6 +209,10 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
+    //
+    // 6 QC (ALIGN) - ILLUMINATION CORRECTION APPLICATION ALIGNMENT QC
+    //
+
     // QC of barcode alignment and duplication check
     // First, collect cycle information from the samplesheet to infer num_cycles
     ch_plate_cycles = ch_samplesheet_sbs
@@ -236,6 +252,10 @@ workflow BARCODING {
             [qc_meta, unique_wells, csv_files, num_cycles]
         }
 
+    //
+    // 6 QC (DUP CHECK) - ILLUMINATION CORRECTION APPLICATION DUPLICATION CHECK QC
+    //
+
     // QC: Duplication Check (ILLUMAPPLY) - per plate
     // Use the same CSV files that go to QC_BARCODEALIGN
     ch_illumapply_dup_check = ch_qc_barcode_input
@@ -257,6 +277,10 @@ workflow BARCODING {
         acquisition_geometry_columns,
     )
     ch_versions = ch_versions.mix(QC_BARCODEALIGN.out.versions)
+
+    //
+    // 7 - BARCODE PREPROCESSING
+    //
 
     // ILLUMAPPLY outputs may be per site or per well depending on grouping mode
     // PREPROCESS always needs site-level grouping, so we need to regroup if illumapply was grouped by well
@@ -313,7 +337,10 @@ workflow BARCODING {
         storeDir: "${outdir}/workspace/load_data_csv/",
     )
 
-    //// QC: Barcode preprocessing ////
+    //
+    // 7 QC (BARCODE CALLS) - BARCODE PREPROCESSING BARCODE CALLSQC
+    //
+
     // Group preprocessing stats by plate and collect wells
     ch_preprocess_qc_input = CELLPROFILER_PREPROCESS.out.preprocess_stats
         .map { meta, csv_files ->
@@ -339,6 +366,10 @@ workflow BARCODING {
             [qc_meta, unique_wells, foci_csvs, image_csvs, num_cycles]
         }
 
+    //
+    // 7 QC (DUP CHECK) - BARCODE PREPROCESSING DUPLICATION CHECK QC
+    //
+
     //// QC: Duplication Check (PREPROCESS) - per plate ////
     ch_preprocess_dup_check = ch_preprocess_qc_input
         .map { qc_meta, _wells, _foci_csvs, image_csvs, _num_cycles ->
@@ -362,7 +393,10 @@ workflow BARCODING {
     )
     ch_versions = ch_versions.mix(QC_PREPROCESS.out.versions)
 
-    // STITCH & CROP IMAGES ////
+    //
+    // 8 - STITCH AND CROP
+    //
+
     // PREPROCESS outputs are per site, but STITCHCROP needs all sites together per well
     // Re-group by well before stitching
     ch_preprocess_by_well = CELLPROFILER_PREPROCESS.out.preprocessed_images
@@ -439,6 +473,10 @@ workflow BARCODING {
         .filter { item -> item != null }
 
     ch_versions = ch_versions.mix(FIJI_STITCHCROP.out.versions)
+
+    //
+    // 8 QC - STITCH AND CROP MONTAGE QC
+    //
 
     // QC montage for stitchcrop results
     ch_stitchcrop_qc = FIJI_STITCHCROP.out.downsampled_images
