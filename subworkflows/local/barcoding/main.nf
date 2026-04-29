@@ -267,15 +267,15 @@ workflow BARCODING {
     //
 
     // Use the same CSV files that go to QC_BARCODEALIGN
-    ch_illumapply_dup_check = ch_qc_barcode_input
-        .map { qc_meta, _wells, csv_files, _num_cycles ->
-            [qc_meta, csv_files]
-        }
+    //ch_illumapply_dup_check = ch_qc_barcode_input
+    //    .map { qc_meta, _wells, csv_files, _num_cycles ->
+    //        [qc_meta, csv_files]
+    //    }
     
-    QC_ILLUMAPPLY_DUP_CHECK(
-        ch_illumapply_dup_check
-    )
-    ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
+    //QC_ILLUMAPPLY_DUP_CHECK(
+    //    ch_illumapply_dup_check
+    //)
+    //ch_versions = ch_versions.mix(QC_ILLUMAPPLY_DUP_CHECK.out.versions)
 
     //
     // 7 - BARCODE PREPROCESSING
